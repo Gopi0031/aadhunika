@@ -1,6 +1,6 @@
 // app/about/page.js
 
-
+export const dynamic = 'force-dynamic';
 
 async function getAboutImages() {
   try {

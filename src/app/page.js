@@ -1,4 +1,5 @@
 // app/page.js
+export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import HeroSection from '@/components/HeroSection';
 
@@ -19,9 +20,9 @@ async function getHeroData() {
 
 async function getSpecialists() {
   try {
-    const res = await fetch(`${getBaseUrl()}/api/specialists`, {
-      cache: 'no-store',
-    });
+const res = await fetch(`/api/hero-images`, {
+  cache: 'no-store',
+});
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
