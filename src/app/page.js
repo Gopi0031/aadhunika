@@ -1,15 +1,17 @@
 // app/page.js
-export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import HeroSection from '@/components/HeroSection';
 
-
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
+  return 'http://localhost:3000';
+};
 
 async function getHeroData() {
   try {
-    const res = await fetch(`/api/hero-images`, {
-  cache: 'no-store',
-});
+    const res = await fetch(`${getBaseUrl()}/api/hero-images`, {
+      cache: 'no-store',
+    });
     if (!res.ok) return null;
     return res.json();
   } catch (error) {
@@ -20,9 +22,9 @@ async function getHeroData() {
 
 async function getSpecialists() {
   try {
-const res = await fetch(`/api/hero-images`, {
-  cache: 'no-store',
-});
+    const res = await fetch(`${getBaseUrl()}/api/specialists`, {
+      cache: 'no-store',
+    });
     if (!res.ok) return [];
     return res.json();
   } catch (error) {

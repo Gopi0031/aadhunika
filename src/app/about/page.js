@@ -1,12 +1,15 @@
 // app/about/page.js
 
-export const dynamic = 'force-dynamic';
+const getBaseUrl = () => {
+  if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL;
+  return 'http://localhost:3000';
+};
 
 async function getAboutImages() {
   try {
-   const res = await fetch(`/api/about-images`, {
-  cache: 'no-store',
-});
+    const res = await fetch(`${getBaseUrl()}/api/about-images`, {
+      cache: 'no-store',
+    });
     if (!res.ok) return [];
     return res.json();
   } catch (error) {
