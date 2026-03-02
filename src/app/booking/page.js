@@ -383,7 +383,7 @@ function InfoPanel({ appointmentType, formData }) {
             e.currentTarget.style.boxShadow = '0 4px 12px rgba(194,65,12,0.35)';
           }}
         >
-          📞 +91 6305650469
+          📞 +91 9492121131
         </a>
       </div>
 
@@ -924,7 +924,7 @@ export default function BookingPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {[
                     { value: 'Offline', label: 'Hospital Visit', sub: 'Free', icon: '🏥' },
-                    { value: 'Online', label: 'Video Consultation', sub: `₹${CONSULTATION_FEES.Online}`, icon: '📹' },
+                    { value: 'Online', label: 'Online Consultation', sub: `₹${CONSULTATION_FEES.Online}`, icon: '👨‍⚕️💻' },
                   ].map((type) => {
                     const active = formData.appointmentType === type.value;
                     return (

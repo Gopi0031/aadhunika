@@ -85,14 +85,19 @@ export default async function HomePage() {
 
         <div className="facility-grid">
           {[
-            { icon: '🏥', text: 'Modern Operation Theatres' },
-            { icon: '🫀', text: 'Advanced ICU & NICU' },
-            { icon: '🔬', text: 'Diagnostic & Imaging Labs' },
-            { icon: '🚑', text: '24/7 Emergency Services' },
-            { icon: '💊', text: '24/7 Pharmacy' },
-            { icon: '🩻', text: 'X-Ray & Ultrasound' },
-            { icon: '🫁', text: 'Ventilator Support' },
-            { icon: '🏦', text: 'Insurance Assistance' },
+           
+  
+  { icon: '🫀', text: 'Intensive Care Unit (ICU) & Neonatal Intensive Care Unit (NICU) with Ventilator Support' },
+  { icon: '🚨', text: 'Emergency & Trauma Care Services' },
+  { icon: '🔬', text: 'Clinical Laboratory & Diagnostic Services' },
+  { icon: '💊', text: '24/7 In-House Pharmacy Services' },
+  { icon: '🩻', text: 'Radiology Services (X-Ray & Ultrasonography)' },
+  { icon: '🏥', text: 'Modular Operation Theatres' },
+  { icon: '🫀', text: '2D Echocardiography (Cardiac Imaging)' },
+  { icon: '📋', text: 'Insurance & TPA Assistance Desk' },
+  // { icon: '🩸', text: 'Hemodialysis & Renal Support Services' }
+
+
           ].map((item, i) => (
             <div
               key={i}

@@ -941,7 +941,7 @@ body {
   font-size: clamp(24px, 4vw, 36px);
   font-weight: 800;
   color: #0F766E;
-  margin: 60px 0 40px;
+  margin: -90px 0 40px;
   position: relative;
 }
 
@@ -1103,7 +1103,7 @@ body {
 
 /* ================= FACILITIES SECTION ================= */
 .facilities {
-  padding: 100px 40px;
+  padding: 10px 40px;
   background: transparent;
 }
 

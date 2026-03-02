@@ -21,9 +21,9 @@ export default function Footer() {
           <h4>Quick Links</h4>
           <ul>
             <li><Link href="/">Home</Link></li>
-            <li><Link href="/about">About Us</Link></li>
             <li><Link href="/services">Services</Link></li>
             <li><Link href="/booking">Booking</Link></li>
+            <li><Link href="/about">About Us</Link></li>
             <li><Link href="/contact">Contact</Link></li>
           </ul>
         </div>
@@ -31,8 +31,8 @@ export default function Footer() {
         {/* Address */}
         <div className="footer-section">
           <h4>Contact</h4>
-          <p>📍 Guntur, Andhra Pradesh, India-522002</p>
-          <p>📞 +91 9XXXXXXXXX</p>
+          <p>📍 AADHUNIKA MULTISPECIALITY HOSPITAL, beside Sivalayam Street, Ganeshrao Peta, Kothapeta, Guntur, Andhra Pradesh, India</p>
+          <p>📞 +91 9492121131</p>
           <p>✉️ support@aadhunikahospital.com</p>
         </div>
 

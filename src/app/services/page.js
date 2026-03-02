@@ -6,53 +6,65 @@ import { useState, useEffect, useRef } from 'react';
 
 const departments = [
   {
-    name: 'Pulmonology',
-    desc: 'Comprehensive respiratory care including bronchoscopy, PFT, and advanced lung disease management.',
+    name: 'Pulmonology & Critical Care',
+    desc: 'Comprehensive respiratory care and intensive monitoring for life-threatening conditions.',
     icon: '🫁',
-    color: '#0F766E',
+    color: '#16a34a', // Green
   },
   {
-    name: 'Gynaecology & Obstetrics',
-    desc: "Women's health, pregnancy care, safe childbirth, and advanced infertility treatments.",
-    icon: '👩‍⚕️',
-    color: '#7c3aed',
+    name: 'Obstetrics & Gynaecology',
+    desc: "Comprehensive women's health, maternity care, safe childbirth, and gynecological treatments.",
+    icon: '🤰',
+    color: '#2563eb', // Blue
   },
   {
-    name: 'Orthopedics & Polytrauma',
-    desc: 'Bone & joint disorders, trauma care, and advanced orthopedic surgical procedures.',
+    name: 'Orthopedics & Trauma',
+    desc: 'Specialized care for bone and joint disorders, and emergency trauma management.',
     icon: '🦴',
-    color: '#b45309',
+    color: '#16a34a', // Green
   },
   {
-    name: 'ENT',
-    desc: 'Expert ear, nose, throat care with endoscopic procedures and precision diagnostics.',
+    name: 'Ear Nose & Throat; Endoscopic & Microscopic Surgeries',
+    desc: 'Advanced ENT care featuring minimally invasive endoscopic and precision microscopic procedures.',
     icon: '👂',
-    color: '#0284c7',
+    color: '#2563eb', // Blue
   },
   {
-    name: 'General Medicine',
-    desc: 'Primary care for chronic conditions, preventive health management, and internal medicine.',
-    icon: '🩺',
-    color: '#059669',
-  },
-  {
-    name: 'General Surgery',
-    desc: 'Laparoscopic and minimally invasive surgical procedures with rapid recovery.',
+    name: 'General & Laparoscopic Surgeries',
+    desc: 'Expert surgical care including minimally invasive laparoscopic procedures for faster recovery.',
     icon: '🏥',
-    color: '#dc2626',
+    color: '#16a34a', // Green
   },
+  {
+    name: 'Neurology, Cardiology, Nephrology',
+    desc: 'Specialized medical care for the brain and nervous system, heart conditions, and kidney diseases.',
+    icon: '🧠',
+    color: '#2563eb', // Blue
+  },
+  {
+    name: 'Gastroenterology, Urology',
+    desc: 'Expert diagnostic and therapeutic management of digestive system disorders and urinary tract conditions.',
+    icon: '⚕️',
+    color: '#16a34a', // Green
+  },
+  {
+    name: 'General Medicine, Dermatology',
+    desc: 'Comprehensive primary healthcare, internal medicine, and specialized skin, hair, and nail care.',
+    icon: '🩺',
+    color: '#2563eb', // Blue
+  }
 ];
 
 const hospitalServices = [
-  { icon: '🫀', name: 'ICU & NICU with Ventilators' },
-  { icon: '🚑', name: 'Trauma & Emergency' },
-  { icon: '🔬', name: 'Laboratory Services' },
-  { icon: '💊', name: 'Pharmacy (24/7)' },
-  { icon: '🩻', name: 'X-Ray & Ultrasound' },
-  { icon: '🏥', name: 'Operation Theater' },
-  { icon: '🫀', name: '2D Echocardiography' },
-  { icon: '📋', name: 'Insurance Desk' },
-  { icon: '🩸', name: 'Dialysis Support' },
+  { icon: '🫀', name: 'Intensive Care Unit (ICU) & Neonatal Intensive Care Unit (NICU) with Ventilator Support' },
+  { icon: '🚨', name: 'Emergency & Trauma Care Services' },
+  { icon: '🔬', name: 'Clinical Laboratory & Diagnostic Services' },
+  { icon: '💊', name: '24/7 In-House Pharmacy Services' },
+  { icon: '🩻', name: 'Radiology Services (X-Ray & Ultrasonography)' },
+  { icon: '🏥', name: 'Modular Operation Theatres' },
+  { icon: '🫀', name: '2D Echocardiography (Cardiac Imaging)' },
+  { icon: '📋', name: 'Insurance & TPA Assistance Desk' },
+  // { icon: '🩸', name: 'Hemodialysis & Renal Support Services' }
 ];
 
 function useReveal() {

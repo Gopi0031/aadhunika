@@ -63,16 +63,16 @@ export default function ContactPage() {
     {
       icon: <MapPin size={22} />,
       label: 'Address',
-      value: 'Guntur, Andhra Pradesh, India - 522002',
-      sub: 'Near Main Bus Stand',
+      value: 'AADHUNIKA MULTISPECIALITY HOSPITAL, beside Sivalayam Street, Ganeshrao Peta, Kothapeta, Guntur, Andhra Pradesh, India - 522002',
+      sub: 'Near Sivalayam Street',
       color: '#0F766E',
       bg: '#F0FDFA',
     },
     {
       icon: <Phone size={22} />,
       label: 'Phone',
-      value: '+91 6305650469',
-      sub: 'Available 24/7 for emergencies',
+      value: '+91 9492121131',
+      sub: 'Available 24/7',
       href: 'tel:+916305650469',
       color: '#7c3aed',
       bg: '#F5F3FF',
@@ -80,20 +80,13 @@ export default function ContactPage() {
     {
       icon: <Mail size={22} />,
       label: 'Email',
-      value: 'nagalakshmiakurathi.ak@gmail.com',
+      value: 'support@aadhunikahospital.com',
       sub: 'Reply within 24 hours',
-      href: 'mailto:nagalakshmiakurathi.ak@gmail.com',
+      href: 'support@aadhunikahospital.com',
       color: '#0284c7',
       bg: '#F0F9FF',
     },
-    {
-      icon: <Clock size={22} />,
-      label: 'Working Hours',
-      value: 'Mon – Sat: 8:00 AM – 8:00 PM',
-      sub: 'Emergency: 24/7 Available',
-      color: '#b45309',
-      bg: '#FFFBEB',
-    },
+   
   ];
 
   const inputStyle = (field) => ({
@@ -324,15 +317,14 @@ export default function ContactPage() {
               position: 'relative',
             }}>
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d122960.80789488487!2d80.35714857812499!3d16.306527!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a4a7562e4d4bdf3%3A0x7b6a7e4a3e7e1a0!2sGuntur%2C%20Andhra%20Pradesh!5e0!3m2!1sen!2sin!4v1234567890"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                title="Aadhunika Hospital Location"
-              />
+  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2827.2078434934224!2d80.44725907514083!3d16.30016338441334!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a4a757da004b6a7%3A0x20d5572b26d168f7!2sAADHUNIKA%20MULTISPECIALITY%20HOSPITAL!5e1!3m2!1sen!2sin!4v1772450776596!5m2!1sen!2sin"
+  width="600"
+  height="450"
+  style={{ border: 0 }}
+  allowFullScreen
+  loading="lazy"
+  referrerPolicy="no-referrer-when-downgrade"
+></iframe>
             </div>
 
             {/* Info Card */}
