@@ -46,7 +46,6 @@ export default async function HomePage() {
       {/* ===== SPECIALISTS ===== */}
       <section className="specialists">
         <div className="reveal">
-          <span className="section-tag">Meet Our Team</span>
           <h2 className="section-title">Our Specialists</h2>
         </div>
 
@@ -81,7 +80,6 @@ export default async function HomePage() {
       {/* ===== FACILITIES ===== */}
       <section className="facilities">
         <div className="reveal">
-          <span className="section-tag">World-Class Infrastructure</span>
           <h2 className="section-title">Our Facilities</h2>
         </div>
 
