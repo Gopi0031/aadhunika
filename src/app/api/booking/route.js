@@ -472,6 +472,7 @@ export async function POST(req) {
 
     const {
       name, email, phone, appointmentType, department,
+        doctorId, doctorName,    // ← ADD these two
       date, time, message, fileBase64, fileName, fileType,
       paymentId, orderId, paymentStatus, amountPaid,
     } = body;
@@ -534,6 +535,8 @@ export async function POST(req) {
       phone,
       appointmentType: appointmentType || 'Offline',
       department,
+       doctorId: body.doctorId || null,       // ← ADD
+  doctorName: body.doctorName || '',     // ← ADD
       date,
       time,
       message: message || '',
@@ -663,13 +666,26 @@ async function findNextAvailableSlot(department, currentDate, currentTime, clien
 // =============================================
 // GET — FETCH ALL BOOKINGS
 // =============================================
+// GET FETCH ALL BOOKINGS
 export async function GET(request) {
   const { client, collection } = await getCollection();
   try {
+    const { searchParams } = new URL(request.url);
+    const doctorId = searchParams.get('doctorId');
+    const dept     = searchParams.get('dept');
+
+    // Build query — if doctorId provided, filter by it
+    let query = {};
+    if (doctorId) {
+      query.doctorId = doctorId;
+    } else if (dept) {
+      query.department = dept;  // admin still can filter by dept
+    }
+
     const bookings = await collection
-      .find({})
+      .find(query)
       .sort({ createdAt: -1 })
-      .limit(100)
+      .limit(200)
       .toArray();
 
     return NextResponse.json(bookings);
@@ -679,6 +695,7 @@ export async function GET(request) {
     await client.close();
   }
 }
+
 
 // =============================================
 // PUT — UPDATE STATUS + ZOOM + EMAILS

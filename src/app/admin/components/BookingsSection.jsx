@@ -16,6 +16,8 @@ export default function BookingsSection() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [updatingId, setUpdatingId] = useState(null);
   const [viewingFile, setViewingFile] = useState(null);
+  const [filterDoctor, setFilterDoctor] = useState('all');
+
 
   const fetchBookings = async () => {
     try {
@@ -186,16 +188,17 @@ export default function BookingsSection() {
       fileType.includes('jpeg') || fileType.includes('png');
   };
 
-  const filteredBookings = bookings.filter((booking) => {
-    const matchesSearch =
-      booking.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.phone?.includes(searchTerm) ||
-      booking.department?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      filterStatus === 'all' || booking.status === filterStatus;
-    return matchesSearch && matchesStatus;
-  });
+ const filteredBookings = bookings.filter((booking) => {
+  const matchesSearch =
+    booking.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    booking.phone?.includes(searchTerm) ||
+    booking.department?.toLowerCase().includes(searchTerm.toLowerCase());
+  const matchesStatus = filterStatus === 'all' || booking.status === filterStatus;
+  const matchesDoctor = filterDoctor === 'all' || booking.doctorId === filterDoctor; // ← ADD
+  return matchesSearch && matchesStatus && matchesDoctor;
+});
+
 
   const counts = {
     all: bookings.length,
@@ -278,6 +281,17 @@ export default function BookingsSection() {
             <option value="cancelled">Cancelled</option>
             <option value="completed">Completed</option>
           </select>
+          {/* ✅ ADD THIS — Doctor filter */}
+<div className="filter-container">
+  <User size={20} />
+  <select value={filterDoctor} onChange={(e) => setFilterDoctor(e.target.value)}>
+    <option value="all">All Doctors</option>
+    {[...new Map(bookings.filter(b => b.doctorName).map(b => [b.doctorId, b.doctorName])).entries()]
+      .map(([id, name]) => (
+        <option key={id} value={id}>{name}</option>
+      ))}
+  </select>
+</div>
         </div>
         <button className="refresh-btn" onClick={fetchBookings}>
           <RefreshCw size={18} /> Refresh
@@ -358,6 +372,15 @@ export default function BookingsSection() {
                   <Building size={16} />
                   <span>{booking.department}</span>
                 </div>
+{booking.doctorName && (
+  <div className="booking-detail">
+    <User size={16} />
+    <span style={{ fontWeight: 600, color: '#0F766E' }}>
+      👨‍⚕️ Dr. {booking.doctorName}
+    </span>
+  </div>
+)}
+
                 <div className="booking-detail">
                   <Calendar size={16} />
                   <span>{formatDate(booking.date)}</span>

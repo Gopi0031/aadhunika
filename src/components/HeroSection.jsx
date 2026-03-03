@@ -66,9 +66,6 @@ function StatCounter({ number, suffix, label }) {
     </div>
   );
 }
-
-
-
 function HeroContent() {
   return (
     <div style={{

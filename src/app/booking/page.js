@@ -379,13 +379,20 @@ export default function BookingPage() {
 
   // ✅ NEW: dynamic department fee
   const [deptFee, setDeptFee] = useState(0);
+  const [doctorList, setDoctorList]       = useState([]);
+const [loadingDoctors, setLoadingDoctors] = useState(false);
 
-  const [formData, setFormData] = useState({
-    name: '', email: '', phone: '',
-    appointmentType: 'Offline', department: '',
-    date: '', time: '', message: '',
-    file: null, fileBase64: '', fileName: '', fileType: '',
-  });
+const [formData, setFormData] = useState({
+  name: '', email: '', phone: '',
+  appointmentType: 'Offline',
+  department: '',
+  doctorId: '',       // ← ADD
+  doctorName: '',     // ← ADD
+  date: '', time: '',
+  message: '',
+  file: null, fileBase64: '', fileName: '', fileType: '',
+});
+
 
   // ── Step tracking ──
   useEffect(() => {
@@ -473,13 +480,49 @@ export default function BookingPage() {
   }, [formData.date, formData.department, selectedDate, fetchSlotsFromAdmin]);
 
   // ✅ Updated: also sets deptFee when department changes
-  const handleDepartmentChange = (deptName) => {
-    setFormData((prev) => ({ ...prev, department: deptName, time: '' }));
-    fetchSlotsFromAdmin(getFormattedDate(selectedDate), deptName);
+  const handleDepartmentChange = async (deptName) => {
+  // Reset doctor when dept changes
+  setFormData(prev => ({
+    ...prev,
+    department: deptName,
+    doctorId: '',
+    doctorName: '',
+    time: '',
+  }));
+  setDoctorList([]);
+  setDeptFee(0);
 
-    const selected = departmentList.find(d => d.name === deptName);
-    setDeptFee(selected?.fee ?? 0);
-  };
+  // Fetch department fee
+  const selected = departmentList.find(d => d.name === deptName);
+  setDeptFee(selected?.fee ?? 0);
+
+  // Fetch doctors for this dept
+  if (deptName) {
+    setLoadingDoctors(true);
+    try {
+      const res = await fetch('/api/doctors');
+      if (res.ok) {
+        const all = await res.json();
+        setDoctorList(all.filter(d => d.dept === deptName));
+      }
+    } catch {
+      toast.error('Failed to load doctors');
+    } finally {
+      setLoadingDoctors(false);
+    }
+  }
+
+  fetchSlotsFromAdmin(getFormattedDate(selectedDate), deptName);
+};
+const handleDoctorChange = (doctorId) => {
+  const doc = doctorList.find(d => d._id === doctorId);
+  if (!doc) return;
+  setFormData(prev => ({ ...prev, doctorId, doctorName: doc.name }));
+  // Use doctor's own fee if set, otherwise fallback to department fee
+  if (doc.fee != null && doc.fee > 0) setDeptFee(doc.fee);
+};
+
+
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -647,6 +690,8 @@ export default function BookingPage() {
           name: formData.name, email: formData.email, phone: formData.phone,
           appointmentType: formData.appointmentType,
           department: formData.department,
+          doctorId: formData.doctorId,       // ← ADD
+  doctorName: formData.doctorName,   // ← ADD
           date: formData.date, time: formData.time, message: formData.message,
           fileBase64: formData.appointmentType === 'Online' ? formData.fileBase64 : '',
           fileName:   formData.appointmentType === 'Online' ? formData.fileName   : '',
@@ -676,6 +721,8 @@ export default function BookingPage() {
           name: '', email: '', phone: '', message: '', time: '',
           appointmentType: 'Offline',
           file: null, fileBase64: '', fileName: '', fileType: '',
+          doctorId: '',
+doctorName: '',
         }));
         setDeptFee(0); // ✅ reset fee on success
         if (paymentId) {
@@ -702,7 +749,8 @@ export default function BookingPage() {
     if (!formData.phone.trim() || formData.phone.length < 10)
       return toast.error('📱 Enter valid 10-digit phone number');
     if (!formData.department)   return toast.error('🏥 Select a department');
-    if (!formData.time)         return toast.error('⏰ Select a time slot');
+if (!formData.doctorId) return toast.error('Please select a doctor');
+  if (!formData.time)         return toast.error('⏰ Select a time slot');
     if (formData.appointmentType === 'Online' && !formData.fileBase64)
       return toast.error('📎 Upload medical reports for online consultation');
     if (isSubmitting || paymentLoading) return;
@@ -874,21 +922,107 @@ export default function BookingPage() {
               </div>
 
               {/* Department */}
-              <FormInput label="Department" required icon="🏥">
-                <select name="department" value={formData.department} onChange={handleChange}
-                  required
-                  onFocus={() => setFocusedField('department')} onBlur={() => setFocusedField(null)}
-                  style={inputStyle('department')}>
-                  <option value="">Select Department</option>
-                  {departmentList.map((dept) => (
-                    // ✅ Show fee in dropdown option
-                   // ✅ REPLACE WITH
-<option key={dept._id} value={dept.name}>
-  {dept.name}
-</option>
-                  ))}
-                </select>
-              </FormInput>
+             {/* Department */}
+<FormInput label="Department" required icon="🏥">
+  <select
+    name="department"
+    value={formData.department}
+    onChange={handleChange}
+    required
+    onFocus={() => setFocusedField('department')}
+    onBlur={() => setFocusedField(null)}
+    style={inputStyle('department')}
+  >
+    <option value="">Select Department</option>
+    {departmentList.map(dept => (
+      <option key={dept._id || dept.id} value={dept.name}>
+        {dept.name}{dept.fee ? ` — ₹${dept.fee}` : ''}
+      </option>
+    ))}
+  </select>
+</FormInput>
+
+{/* Doctor — shown after dept selected */}
+{formData.department && (
+  <FormInput label="Select Doctor" required icon="👨‍⚕️">
+    {loadingDoctors ? (
+      <div style={{ padding: '12px 16px', background: '#F8FAFC', borderRadius: 12, border: '2px solid #E5E7EB', color: '#64748B', fontSize: 14 }}>
+        Loading doctors...
+      </div>
+    ) : doctorList.length === 0 ? (
+      <div style={{ padding: '12px 16px', background: '#FEF2F2', borderRadius: 12, border: '2px solid #FECACA', color: '#991B1B', fontSize: 13, fontWeight: 600 }}>
+        ⚠️ No doctors available in this department
+      </div>
+    ) : (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {doctorList.map(doc => {
+          const selected = formData.doctorId === doc._id;
+          return (
+            <button
+              key={doc._id}
+              type="button"
+              onClick={() => handleDoctorChange(doc._id)}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
+                border: `2px solid ${selected ? '#0F766E' : '#E5E7EB'}`,
+                background: selected
+                  ? 'linear-gradient(135deg, rgba(15,118,110,0.08), rgba(5,150,105,0.05))'
+                  : '#fff',
+                fontFamily: 'inherit', transition: 'all 0.2s ease',
+                boxShadow: selected ? '0 4px 16px rgba(15,118,110,0.2)' : '0 1px 4px rgba(0,0,0,0.04)',
+                transform: selected ? 'translateY(-1px)' : 'none',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                {/* Avatar */}
+                <div style={{
+                  width: 40, height: 40, borderRadius: '50%',
+                  background: selected
+                    ? 'linear-gradient(135deg, #0F766E, #059669)'
+                    : 'linear-gradient(135deg, #CCFBF1, #A7F3D0)',
+                  color: selected ? '#fff' : '#0F766E',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 800, fontSize: 16, flexShrink: 0,
+                }}>
+                  {doc.name.charAt(0).toUpperCase()}
+                </div>
+                <div style={{ textAlign: 'left' }}>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: selected ? '#0F766E' : '#1E293B' }}>
+                    {doc.name}
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B' }}>
+                    {doc.specialization || doc.dept}
+                  </p>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <p style={{
+                  margin: 0, fontSize: 14, fontWeight: 800,
+                  color: selected ? '#059669' : '#374151',
+                }}>
+                  ₹{doc.fee ?? deptFee}
+                </p>
+                <p style={{ margin: '2px 0 0', fontSize: 10, color: '#94A3B8', fontWeight: 600 }}>
+                  CONSULTATION
+                </p>
+              </div>
+              {selected && (
+                <div style={{
+                  position: 'absolute', top: -6, right: -6,
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: '#059669', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, color: '#fff',
+                }}>✓</div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    )}
+  </FormInput>
+)}
 
          {/* Calendar */}
               <div style={{ marginBottom: 20 }}>

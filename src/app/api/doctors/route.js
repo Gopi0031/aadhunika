@@ -1,6 +1,6 @@
-// src/app/api/doctors/route.js
 import { NextResponse } from 'next/server';
 import { MongoClient, ObjectId } from 'mongodb';
+import bcrypt from 'bcryptjs';
 
 const uri = process.env.MONGODB_URI;
 let client;
@@ -11,9 +11,9 @@ async function connect() {
   return client.db('hospital');
 }
 
-// ✅ Serialize ObjectId → string so JSON works properly
 function serialize(doc) {
-  return { ...doc, _id: doc._id.toString() };
+  const { password, ...rest } = doc;
+  return { ...rest, _id: doc._id.toString() };
 }
 
 export async function GET() {
@@ -26,44 +26,34 @@ export async function GET() {
     return NextResponse.json([], { status: 500 });
   }
 }
-export async function PUT(req) {
-  try {
-    const db = await connect();
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get('id');
-    const { name, dept } = await req.json();
-
-    if (!name?.trim() || !dept?.trim()) {
-      return NextResponse.json({ error: 'Name and department are required' }, { status: 400 });
-    }
-
-    await db.collection('doctors').updateOne(
-      { _id: new ObjectId(id) },
-      { $set: { name: name.trim(), dept: dept.trim() } }
-    );
-
-    return NextResponse.json({ success: true });
-  } catch (e) {
-    console.error('Doctors PUT Error:', e);
-    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
-  }
-}
-
 
 export async function POST(req) {
   try {
     const db = await connect();
-    const { name, dept, image, speciality } = await req.json();
+    const { name, phone, dept, specialization, fee, email, password } = await req.json();
 
-    if (!name?.trim() || !dept?.trim()) {
-      return NextResponse.json({ error: 'Name and department are required' }, { status: 400 });
+    if (!name?.trim() || !dept?.trim() || !email?.trim() || !password) {
+      return NextResponse.json({ error: 'Required fields missing' }, { status: 400 });
     }
+
+    // Check duplicate email or phone
+    const exists = await db.collection('doctors').findOne({
+      $or: [{ email: email.trim().toLowerCase() }, { phone: phone?.trim() }],
+    });
+    if (exists) {
+      return NextResponse.json({ error: 'Doctor with this email or phone already exists' }, { status: 409 });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.collection('doctors').insertOne({
       name: name.trim(),
+      phone: phone?.trim() || '',
       dept: dept.trim(),
-      image: image || '',
-      speciality: speciality || dept.trim(),
+      specialization: specialization?.trim() || dept.trim(),
+      fee: Number(fee) || 0,
+      email: email.trim().toLowerCase(),
+      password: hashedPassword,
       createdAt: new Date(),
     });
 
@@ -74,21 +64,38 @@ export async function POST(req) {
   }
 }
 
+export async function PUT(req) {
+  try {
+    const db = await connect();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
+    const { name, dept, phone, specialization, fee, email } = await req.json();
+
+    if (!name?.trim() || !dept?.trim()) {
+      return NextResponse.json({ error: 'Name and department are required' }, { status: 400 });
+    }
+
+    await db.collection('doctors').updateOne(
+      { _id: new ObjectId(id) },
+      { $set: { name: name.trim(), dept: dept.trim(), phone: phone || '', specialization: specialization || '', fee: Number(fee) || 0, email: email || '' } }
+    );
+
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    console.error('Doctors PUT Error:', e);
+    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req) {
   try {
     const db = await connect();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
-    }
-
-    // ✅ Convert string id back to ObjectId for MongoDB query
+    if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
     await db.collection('doctors').deleteOne({ _id: new ObjectId(id) });
     return NextResponse.json({ success: true });
   } catch (e) {
-    console.error('Doctors DELETE Error:', e);
     return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
   }
 }
