@@ -205,7 +205,6 @@ function SlotButton({ slot, isSelected, isUnavailable, isPast, isBooked, isClose
 }
 
 // ── Info Panel ──
-// ✅ Now receives deptFee as a prop
 function InfoPanel({ appointmentType, formData, deptFee }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
@@ -219,31 +218,29 @@ function InfoPanel({ appointmentType, formData, deptFee }) {
     return () => observer.disconnect();
   }, []);
 
-  // ✅ Dynamic fee shown in booking steps
-  const onlineFee = formData.department ? deptFee : '—';
+  const fee = formData.department ? deptFee : '—';
 
+  // ✅ Payment step shown for BOTH Online and Offline
   const steps = [
     { icon: '👤', text: 'Fill patient information',    done: !!(formData.name && formData.email && formData.phone) },
     { icon: '🏥', text: 'Select department',            done: !!formData.department },
     { icon: '📅', text: 'Choose date & time slot',      done: !!(formData.date && formData.time) },
+    { icon: '💳', text: `Pay ₹${fee} via UPI / Card`,   done: false },
     ...(appointmentType === 'Online'
-      ? [
-          { icon: '💳', text: `Pay ₹${onlineFee} via UPI / Card`, done: false },
-          { icon: '📹', text: 'Receive Zoom meeting link',          done: false },
-        ]
-      : []),
+      ? [{ icon: '📹', text: 'Receive Zoom meeting link', done: false }]
+      : [{ icon: '🏥', text: 'Visit hospital at booked time', done: false }]),
     { icon: '✅', text: 'Get confirmation email', done: false },
   ];
 
   const upiApps = [
-    { name: 'Google Pay',    emoji: '🟢' },
-    { name: 'PhonePe',       emoji: '🟣' },
-    { name: 'Paytm',         emoji: '🔵' },
-    { name: 'BHIM UPI',      emoji: '🟠' },
-    { name: 'Amazon Pay',    emoji: '🟡' },
-    { name: 'CRED',          emoji: '⚫' },
-    { name: 'WhatsApp Pay',  emoji: '🟢' },
-    { name: 'Any UPI App',   emoji: '📱' },
+    { name: 'Google Pay',   emoji: '🟢' },
+    { name: 'PhonePe',      emoji: '🟣' },
+    { name: 'Paytm',        emoji: '🔵' },
+    { name: 'BHIM UPI',     emoji: '🟠' },
+    { name: 'Amazon Pay',   emoji: '🟡' },
+    { name: 'CRED',         emoji: '⚫' },
+    { name: 'WhatsApp Pay', emoji: '🟢' },
+    { name: 'Any UPI App',  emoji: '📱' },
   ];
 
   return (
@@ -253,6 +250,7 @@ function InfoPanel({ appointmentType, formData, deptFee }) {
       transform: visible ? 'none' : 'translateX(40px)',
       transition: 'all 0.8s cubic-bezier(0.25,0.46,0.45,0.94) 0.2s',
     }}>
+
       {/* Booking Process */}
       <div style={{
         background: 'linear-gradient(135deg, #F0FDFA, #ECFDF5)',
@@ -330,33 +328,31 @@ function InfoPanel({ appointmentType, formData, deptFee }) {
         </a>
       </div>
 
-      {/* UPI Apps (Online only) */}
-      {appointmentType === 'Online' && (
-        <div style={{
-          background: '#fff', borderRadius: 16, padding: '18px 20px',
-          border: '1px solid #E2E8F0', boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-        }}>
-          <p style={{ fontWeight: 800, fontSize: 14, color: '#166534', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            📲 Supported Payment Apps
-          </p>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-            {upiApps.map((app) => (
-              <div key={app.name} style={{
-                display: 'flex', alignItems: 'center', gap: 7,
-                fontSize: 12, color: '#374151', fontWeight: 600,
-                padding: '6px 10px', borderRadius: 8, background: '#F8FAFC',
-                border: '1px solid #E2E8F0',
-              }}>
-                <span>{app.emoji}</span>
-                <span>{app.name}</span>
-              </div>
-            ))}
-          </div>
-          <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 12, textAlign: 'center', lineHeight: 1.5 }}>
-            🔒 Secured by Razorpay | 256-bit SSL | PCI DSS Compliant
-          </p>
+      {/* ✅ UPI Apps — shown for BOTH Online and Offline */}
+      <div style={{
+        background: '#fff', borderRadius: 16, padding: '18px 20px',
+        border: '1px solid #E2E8F0', boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+      }}>
+        <p style={{ fontWeight: 800, fontSize: 14, color: '#166534', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          📲 Supported Payment Apps
+        </p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {upiApps.map((app) => (
+            <div key={app.name} style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              fontSize: 12, color: '#374151', fontWeight: 600,
+              padding: '6px 10px', borderRadius: 8, background: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+            }}>
+              <span>{app.emoji}</span>
+              <span>{app.name}</span>
+            </div>
+          ))}
         </div>
-      )}
+        <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 12, textAlign: 'center', lineHeight: 1.5 }}>
+          🔒 Secured by Razorpay | 256-bit SSL | PCI DSS Compliant
+        </p>
+      </div>
     </div>
   );
 }
@@ -366,7 +362,7 @@ function InfoPanel({ appointmentType, formData, deptFee }) {
 // ══════════════════════════════════════════
 export default function BookingPage() {
   const router = useRouter();
-  const [selectedDate, setSelectedDate]   = useState(new Date());
+  const [selectedDate, setSelectedDate]     = useState(new Date());
   const [departmentList, setDepartmentList] = useState([]);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
@@ -376,30 +372,27 @@ export default function BookingPage() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [currentStep, setCurrentStep]       = useState(1);
   const [focusedField, setFocusedField]     = useState(null);
+  const [deptFee, setDeptFee]               = useState(0);
+  const [doctorList, setDoctorList]         = useState([]);
+  const [loadingDoctors, setLoadingDoctors] = useState(false);
 
-  // ✅ NEW: dynamic department fee
-  const [deptFee, setDeptFee] = useState(0);
-  const [doctorList, setDoctorList]       = useState([]);
-const [loadingDoctors, setLoadingDoctors] = useState(false);
-
-const [formData, setFormData] = useState({
-  name: '', email: '', phone: '',
-  appointmentType: 'Offline',
-  department: '',
-  doctorId: '',       // ← ADD
-  doctorName: '',     // ← ADD
-  date: '', time: '',
-  message: '',
-  file: null, fileBase64: '', fileName: '', fileType: '',
-});
-
+  const [formData, setFormData] = useState({
+    name: '', email: '', phone: '',
+    appointmentType: 'Offline',
+    department: '',
+    doctorId: '',
+    doctorName: '',
+    date: '', time: '',
+    message: '',
+    file: null, fileBase64: '', fileName: '', fileType: '',
+  });
 
   // ── Step tracking ──
   useEffect(() => {
-    if (formData.time)                                    setCurrentStep(4);
-    else if (formData.department && formData.date)        setCurrentStep(3);
+    if (formData.time)                                         setCurrentStep(4);
+    else if (formData.department && formData.date)             setCurrentStep(3);
     else if (formData.name && formData.email && formData.phone) setCurrentStep(2);
-    else                                                  setCurrentStep(1);
+    else                                                       setCurrentStep(1);
   }, [formData.name, formData.email, formData.phone,
       formData.department, formData.date, formData.time]);
 
@@ -411,17 +404,16 @@ const [formData, setFormData] = useState({
         const res = await fetch('/api/departments');
         if (res.ok) {
           const data = await res.json();
-          // ✅ Store full dept objects (with fee)
           if (Array.isArray(data) && data.length > 0) {
             setDepartmentList(data);
           } else {
             setDepartmentList([
-              { _id: '1', name: 'Pulmonology',      fee: 500 },
-              { _id: '2', name: 'Orthopedics',       fee: 600 },
-              { _id: '3', name: 'Gynaecology',       fee: 500 },
-              { _id: '4', name: 'ENT',               fee: 400 },
-              { _id: '5', name: 'General Medicine',  fee: 300 },
-              { _id: '6', name: 'General Surgery',   fee: 700 },
+              { _id: '1', name: 'Pulmonology',     fee: 500 },
+              { _id: '2', name: 'Orthopedics',      fee: 600 },
+              { _id: '3', name: 'Gynaecology',      fee: 500 },
+              { _id: '4', name: 'ENT',              fee: 400 },
+              { _id: '5', name: 'General Medicine', fee: 300 },
+              { _id: '6', name: 'General Surgery',  fee: 700 },
             ]);
           }
         }
@@ -479,50 +471,37 @@ const [formData, setFormData] = useState({
     return () => clearInterval(interval);
   }, [formData.date, formData.department, selectedDate, fetchSlotsFromAdmin]);
 
-  // ✅ Updated: also sets deptFee when department changes
   const handleDepartmentChange = async (deptName) => {
-  // Reset doctor when dept changes
-  setFormData(prev => ({
-    ...prev,
-    department: deptName,
-    doctorId: '',
-    doctorName: '',
-    time: '',
-  }));
-  setDoctorList([]);
-  setDeptFee(0);
-
-  // Fetch department fee
-  const selected = departmentList.find(d => d.name === deptName);
-  setDeptFee(selected?.fee ?? 0);
-
-  // Fetch doctors for this dept
-  if (deptName) {
-    setLoadingDoctors(true);
-    try {
-      const res = await fetch('/api/doctors');
-      if (res.ok) {
-        const all = await res.json();
-        setDoctorList(all.filter(d => d.dept === deptName));
+    setFormData(prev => ({
+      ...prev, department: deptName, doctorId: '', doctorName: '', time: '',
+    }));
+    setDoctorList([]);
+    setDeptFee(0);
+    const selected = departmentList.find(d => d.name === deptName);
+    setDeptFee(selected?.fee ?? 0);
+    if (deptName) {
+      setLoadingDoctors(true);
+      try {
+        const res = await fetch('/api/doctors');
+        if (res.ok) {
+          const all = await res.json();
+          setDoctorList(all.filter(d => d.dept === deptName));
+        }
+      } catch {
+        toast.error('Failed to load doctors');
+      } finally {
+        setLoadingDoctors(false);
       }
-    } catch {
-      toast.error('Failed to load doctors');
-    } finally {
-      setLoadingDoctors(false);
     }
-  }
+    fetchSlotsFromAdmin(getFormattedDate(selectedDate), deptName);
+  };
 
-  fetchSlotsFromAdmin(getFormattedDate(selectedDate), deptName);
-};
-const handleDoctorChange = (doctorId) => {
-  const doc = doctorList.find(d => d._id === doctorId);
-  if (!doc) return;
-  setFormData(prev => ({ ...prev, doctorId, doctorName: doc.name }));
-  // Use doctor's own fee if set, otherwise fallback to department fee
-  if (doc.fee != null && doc.fee > 0) setDeptFee(doc.fee);
-};
-
-
+  const handleDoctorChange = (doctorId) => {
+    const doc = doctorList.find(d => d._id === doctorId);
+    if (!doc) return;
+    setFormData(prev => ({ ...prev, doctorId, doctorName: doc.name }));
+    if (doc.fee != null && doc.fee > 0) setDeptFee(doc.fee);
+  };
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
@@ -588,15 +567,13 @@ const handleDoctorChange = (doctorId) => {
         return;
       }
 
-      // ✅ Use dynamic deptFee instead of static CONSULTATION_FEES
-      const fee = deptFee;
-
       const res = await fetch('/api/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: fee,
-          service: `${formData.department} - ${formData.appointmentType} Consultation`,
+          amount: deptFee,
+          // ✅ Uses actual appointmentType (Offline or Online)
+          service: `${formData.department} - ${formData.appointmentType === 'Online' ? 'Online Consultation' : 'Hospital Visit'}`,
           patientName: formData.name,
           patientEmail: formData.email,
           patientPhone: formData.phone,
@@ -615,7 +592,10 @@ const handleDoctorChange = (doctorId) => {
         amount: data.order.amount,
         currency: data.order.currency || 'INR',
         name: 'Aadhunika Hospital 🏥',
-        description: `${formData.department} - Online Consultation`,
+        // ✅ Dynamic description for both types
+        description: formData.appointmentType === 'Online'
+          ? `${formData.department} - Online Consultation`
+          : `${formData.department} - Hospital Visit`,
         image: '/Aadhunika.png',
         order_id: data.order.id,
         prefill: {
@@ -629,6 +609,7 @@ const handleDoctorChange = (doctorId) => {
           department: formData.department,
           appointment_date: formData.date,
           appointment_time: formData.time,
+          appointment_type: formData.appointmentType,
         },
         handler: async (response) => {
           const verifyToast = toast.loading('Verifying payment...');
@@ -637,9 +618,9 @@ const handleDoctorChange = (doctorId) => {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                razorpay_order_id:  response.razorpay_order_id,
+                razorpay_order_id:   response.razorpay_order_id,
                 razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
+                razorpay_signature:  response.razorpay_signature,
               }),
             });
             const verifyData = await verifyRes.json();
@@ -679,9 +660,7 @@ const handleDoctorChange = (doctorId) => {
   // ── Submit Booking ──
   const submitBooking = async (paymentId = null, orderId = null) => {
     setIsSubmitting(true);
-    const loadingToast = toast.loading(
-      paymentId ? 'Confirming appointment & generating Zoom link...' : 'Confirming appointment...'
-    );
+    const loadingToast = toast.loading('Confirming appointment...');
     try {
       const res = await fetch('/api/booking', {
         method: 'POST',
@@ -690,8 +669,8 @@ const handleDoctorChange = (doctorId) => {
           name: formData.name, email: formData.email, phone: formData.phone,
           appointmentType: formData.appointmentType,
           department: formData.department,
-          doctorId: formData.doctorId,       // ← ADD
-  doctorName: formData.doctorName,   // ← ADD
+          doctorId: formData.doctorId,
+          doctorName: formData.doctorName,
           date: formData.date, time: formData.time, message: formData.message,
           fileBase64: formData.appointmentType === 'Online' ? formData.fileBase64 : '',
           fileName:   formData.appointmentType === 'Online' ? formData.fileName   : '',
@@ -699,8 +678,7 @@ const handleDoctorChange = (doctorId) => {
           paymentId:     paymentId || null,
           orderId:       orderId   || null,
           paymentStatus: paymentId ? 'PAID' : 'UNPAID',
-          // ✅ Use dynamic deptFee
-          amountPaid: paymentId ? deptFee : 0,
+          amountPaid:    paymentId ? deptFee : 0,
         }),
       });
       const data = await res.json();
@@ -721,10 +699,9 @@ const handleDoctorChange = (doctorId) => {
           name: '', email: '', phone: '', message: '', time: '',
           appointmentType: 'Offline',
           file: null, fileBase64: '', fileName: '', fileType: '',
-          doctorId: '',
-doctorName: '',
+          doctorId: '', doctorName: '',
         }));
-        setDeptFee(0); // ✅ reset fee on success
+        setDeptFee(0);
         if (paymentId) {
           router.push(`/payment-success?paymentId=${paymentId}&orderId=${orderId}&bookingId=${data.bookingId || ''}`);
         }
@@ -749,16 +726,16 @@ doctorName: '',
     if (!formData.phone.trim() || formData.phone.length < 10)
       return toast.error('📱 Enter valid 10-digit phone number');
     if (!formData.department)   return toast.error('🏥 Select a department');
-if (!formData.doctorId) return toast.error('Please select a doctor');
-  if (!formData.time)         return toast.error('⏰ Select a time slot');
+    if (!formData.doctorId)     return toast.error('👨‍⚕️ Please select a doctor');
+    if (!formData.time)         return toast.error('⏰ Select a time slot');
     if (formData.appointmentType === 'Online' && !formData.fileBase64)
       return toast.error('📎 Upload medical reports for online consultation');
     if (isSubmitting || paymentLoading) return;
-    if (formData.appointmentType === 'Online') await handleRazorpayPayment();
-    else await submitBooking();
+    // ✅ Both Online and Offline go through Razorpay
+    await handleRazorpayPayment();
   };
 
-  const safeSlots    = Array.isArray(availableSlots) ? availableSlots : [];
+  const safeSlots     = Array.isArray(availableSlots) ? availableSlots : [];
   const filteredSlots = filterAvailableSlots(safeSlots, formData.date);
   const slotStats = {
     available: filteredSlots.filter((s) => s.status === 'available').length,
@@ -853,15 +830,14 @@ if (!formData.doctorId) return toast.error('Please select a doctor');
 
             <div style={{ padding: 'clamp(20px, 3vw, 32px)' }}>
 
-              {/* Consultation Type */}
+              {/* ✅ Consultation Type — both show dynamic fee */}
               <div style={{ marginBottom: 24 }}>
                 <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   📋 Consultation Type *
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {[
-                    { value: 'Offline', label: 'Hospital Visit',      icon: '🏥',   sub: 'Free' },
-                    // ✅ Dynamic fee shown on Online button
+                    { value: 'Offline', label: 'Hospital Visit',      icon: '🏥',    sub: formData.department ? `₹${deptFee}` : 'Select dept' },
                     { value: 'Online',  label: 'Online Consultation', icon: '👨‍⚕️', sub: formData.department ? `₹${deptFee}` : 'Select dept' },
                   ].map((type) => {
                     const active = formData.appointmentType === type.value;
@@ -922,109 +898,101 @@ if (!formData.doctorId) return toast.error('Please select a doctor');
               </div>
 
               {/* Department */}
-             {/* Department */}
-<FormInput label="Department" required icon="🏥">
-  <select
-    name="department"
-    value={formData.department}
-    onChange={handleChange}
-    required
-    onFocus={() => setFocusedField('department')}
-    onBlur={() => setFocusedField(null)}
-    style={inputStyle('department')}
-  >
-    <option value="">Select Department</option>
-    {departmentList.map(dept => (
-      <option key={dept._id || dept.id} value={dept.name}>
-        {dept.name}{dept.fee ? ` — ₹${dept.fee}` : ''}
-      </option>
-    ))}
-  </select>
-</FormInput>
+              <FormInput label="Department" required icon="🏥">
+                <select
+                  name="department" value={formData.department} onChange={handleChange} required
+                  onFocus={() => setFocusedField('department')} onBlur={() => setFocusedField(null)}
+                  style={inputStyle('department')}
+                >
+                  <option value="">Select Department</option>
+                 {departmentList.map(dept => (
+  <option key={dept._id || dept.id} value={dept.name}>
+    {dept.name}
+  </option>
+))}
 
-{/* Doctor — shown after dept selected */}
-{formData.department && (
-  <FormInput label="Select Doctor" required icon="👨‍⚕️">
-    {loadingDoctors ? (
-      <div style={{ padding: '12px 16px', background: '#F8FAFC', borderRadius: 12, border: '2px solid #E5E7EB', color: '#64748B', fontSize: 14 }}>
-        Loading doctors...
-      </div>
-    ) : doctorList.length === 0 ? (
-      <div style={{ padding: '12px 16px', background: '#FEF2F2', borderRadius: 12, border: '2px solid #FECACA', color: '#991B1B', fontSize: 13, fontWeight: 600 }}>
-        ⚠️ No doctors available in this department
-      </div>
-    ) : (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {doctorList.map(doc => {
-          const selected = formData.doctorId === doc._id;
-          return (
-            <button
-              key={doc._id}
-              type="button"
-              onClick={() => handleDoctorChange(doc._id)}
-              style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
-                border: `2px solid ${selected ? '#0F766E' : '#E5E7EB'}`,
-                background: selected
-                  ? 'linear-gradient(135deg, rgba(15,118,110,0.08), rgba(5,150,105,0.05))'
-                  : '#fff',
-                fontFamily: 'inherit', transition: 'all 0.2s ease',
-                boxShadow: selected ? '0 4px 16px rgba(15,118,110,0.2)' : '0 1px 4px rgba(0,0,0,0.04)',
-                transform: selected ? 'translateY(-1px)' : 'none',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {/* Avatar */}
-                <div style={{
-                  width: 40, height: 40, borderRadius: '50%',
-                  background: selected
-                    ? 'linear-gradient(135deg, #0F766E, #059669)'
-                    : 'linear-gradient(135deg, #CCFBF1, #A7F3D0)',
-                  color: selected ? '#fff' : '#0F766E',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontWeight: 800, fontSize: 16, flexShrink: 0,
-                }}>
-                  {doc.name.charAt(0).toUpperCase()}
-                </div>
-                <div style={{ textAlign: 'left' }}>
-                  <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: selected ? '#0F766E' : '#1E293B' }}>
-                    {doc.name}
-                  </p>
-                  <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B' }}>
-                    {doc.specialization || doc.dept}
-                  </p>
-                </div>
-              </div>
-              <div style={{ textAlign: 'right' }}>
-                <p style={{
-                  margin: 0, fontSize: 14, fontWeight: 800,
-                  color: selected ? '#059669' : '#374151',
-                }}>
-                  ₹{doc.fee ?? deptFee}
-                </p>
-                <p style={{ margin: '2px 0 0', fontSize: 10, color: '#94A3B8', fontWeight: 600 }}>
-                  CONSULTATION
-                </p>
-              </div>
-              {selected && (
-                <div style={{
-                  position: 'absolute', top: -6, right: -6,
-                  width: 20, height: 20, borderRadius: '50%',
-                  background: '#059669', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, color: '#fff',
-                }}>✓</div>
+                </select>
+              </FormInput>
+
+              {/* Doctor */}
+              {formData.department && (
+                <FormInput label="Select Doctor" required icon="👨‍⚕️">
+                  {loadingDoctors ? (
+                    <div style={{ padding: '12px 16px', background: '#F8FAFC', borderRadius: 12, border: '2px solid #E5E7EB', color: '#64748B', fontSize: 14 }}>
+                      Loading doctors...
+                    </div>
+                  ) : doctorList.length === 0 ? (
+                    <div style={{ padding: '12px 16px', background: '#FEF2F2', borderRadius: 12, border: '2px solid #FECACA', color: '#991B1B', fontSize: 13, fontWeight: 600 }}>
+                      ⚠️ No doctors available in this department
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {doctorList.map(doc => {
+                        const selected = formData.doctorId === doc._id;
+                        return (
+                          <button
+                            key={doc._id} type="button"
+                            onClick={() => handleDoctorChange(doc._id)}
+                            style={{
+                              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                              padding: '12px 16px', borderRadius: 12, cursor: 'pointer',
+                              border: `2px solid ${selected ? '#0F766E' : '#E5E7EB'}`,
+                              background: selected
+                                ? 'linear-gradient(135deg, rgba(15,118,110,0.08), rgba(5,150,105,0.05))'
+                                : '#fff',
+                              fontFamily: 'inherit', transition: 'all 0.2s ease',
+                              boxShadow: selected ? '0 4px 16px rgba(15,118,110,0.2)' : '0 1px 4px rgba(0,0,0,0.04)',
+                              transform: selected ? 'translateY(-1px)' : 'none',
+                              position: 'relative',
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                              <div style={{
+                                width: 40, height: 40, borderRadius: '50%',
+                                background: selected
+                                  ? 'linear-gradient(135deg, #0F766E, #059669)'
+                                  : 'linear-gradient(135deg, #CCFBF1, #A7F3D0)',
+                                color: selected ? '#fff' : '#0F766E',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontWeight: 800, fontSize: 16, flexShrink: 0,
+                              }}>
+                                {doc.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div style={{ textAlign: 'left' }}>
+                                <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: selected ? '#0F766E' : '#1E293B' }}>
+                                  {doc.name}
+                                </p>
+                                <p style={{ margin: '2px 0 0', fontSize: 12, color: '#64748B' }}>
+                                  {doc.specialization || doc.dept}
+                                </p>
+                              </div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <p style={{ margin: 0, fontSize: 14, fontWeight: 800, color: selected ? '#059669' : '#374151' }}>
+                                ₹{doc.fee ?? deptFee}
+                              </p>
+                              <p style={{ margin: '2px 0 0', fontSize: 10, color: '#94A3B8', fontWeight: 600 }}>
+                                CONSULTATION
+                              </p>
+                            </div>
+                            {selected && (
+                              <div style={{
+                                position: 'absolute', top: -6, right: -6,
+                                width: 20, height: 20, borderRadius: '50%',
+                                background: '#059669', display: 'flex',
+                                alignItems: 'center', justifyContent: 'center',
+                                fontSize: 11, color: '#fff',
+                              }}>✓</div>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </FormInput>
               )}
-            </button>
-          );
-        })}
-      </div>
-    )}
-  </FormInput>
-)}
 
-         {/* Calendar */}
+              {/* Calendar */}
               <div style={{ marginBottom: 20 }}>
                 <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   📅 Select Date
@@ -1113,11 +1081,11 @@ if (!formData.doctorId) return toast.error('Please select a doctor');
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                         {filteredSlots.map((slot, index) => {
-                          const isBooked     = slot.status === 'booked';
-                          const isClosed     = slot.status === 'closed';
-                          const isPast       = isSlotInPast(slot.time, formData.date);
+                          const isBooked      = slot.status === 'booked';
+                          const isClosed      = slot.status === 'closed';
+                          const isPast        = isSlotInPast(slot.time, formData.date);
                           const isUnavailable = isBooked || isClosed || isPast;
-                          const isSelected   = formData.time === slot.time;
+                          const isSelected    = formData.time === slot.time;
                           return (
                             <SlotButton key={index} slot={slot} isSelected={isSelected}
                               isUnavailable={isUnavailable} isPast={isPast}
@@ -1131,7 +1099,7 @@ if (!formData.doctorId) return toast.error('Please select a doctor');
                 )}
               </div>
 
-              {/* File Upload (Online only) */}
+              {/* File Upload — Online only */}
               {formData.appointmentType === 'Online' && (
                 <div style={{ marginBottom: 20, animation: 'fadeInUp 0.4s ease both' }}>
                   <label style={{ fontSize: 13, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
@@ -1182,34 +1150,39 @@ if (!formData.doctorId) return toast.error('Please select a doctor');
                 />
               </FormInput>
 
-              {/* ✅ Payment Summary — dynamic fee */}
-              {formData.appointmentType === 'Online' && (
-                <div style={{ background: 'linear-gradient(135deg, #F0FDF4, #ECFDF5)', borderRadius: 16, padding: '20px 22px', marginBottom: 20, border: '2px solid #86EFAC', animation: 'fadeInUp 0.4s ease both' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#166534', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                    💳 Payment Summary
-                  </h3>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: '#374151' }}>
-                    <span>{formData.department || 'Department'} – Online Consultation</span>
-                    <span style={{ fontWeight: 700 }}>
-                      {formData.department ? `₹${deptFee}` : '—'}
-                    </span>
-                  </div>
-                  <div style={{ borderTop: '2px dashed #86EFAC', margin: '12px 0' }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 800, color: '#065F46' }}>
-                    <span>Total Payable</span>
-                    <span style={{ color: '#059669' }}>
-                      {formData.department ? `₹${deptFee}` : '—'}
-                    </span>
-                  </div>
-                  {!formData.department && (
-                    <p style={{ fontSize: 12, color: '#B45309', margin: '10px 0 0', textAlign: 'center' }}>
-                      ⚠️ Please select a department to see the consultation fee
-                    </p>
-                  )}
+              {/* ✅ Payment Summary — shown for BOTH types */}
+              <div style={{
+                background: 'linear-gradient(135deg, #F0FDF4, #ECFDF5)',
+                borderRadius: 16, padding: '20px 22px', marginBottom: 20,
+                border: '2px solid #86EFAC', animation: 'fadeInUp 0.4s ease both',
+              }}>
+                <h3 style={{ fontSize: 16, fontWeight: 800, color: '#166534', margin: '0 0 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  💳 Payment Summary
+                </h3>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 14, color: '#374151' }}>
+                  <span>
+                    {formData.department || 'Department'} –{' '}
+                    {formData.appointmentType === 'Online' ? 'Online Consultation' : 'Hospital Visit'}
+                  </span>
+                  <span style={{ fontWeight: 700 }}>
+                    {formData.department ? `₹${deptFee}` : '—'}
+                  </span>
                 </div>
-              )}
+                <div style={{ borderTop: '2px dashed #86EFAC', margin: '12px 0' }} />
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 20, fontWeight: 800, color: '#065F46' }}>
+                  <span>Total Payable</span>
+                  <span style={{ color: '#059669' }}>
+                    {formData.department ? `₹${deptFee}` : '—'}
+                  </span>
+                </div>
+                {!formData.department && (
+                  <p style={{ fontSize: 12, color: '#B45309', margin: '10px 0 0', textAlign: 'center' }}>
+                    ⚠️ Please select a department to see the consultation fee
+                  </p>
+                )}
+              </div>
 
-              {/* Submit Button */}
+              {/* ✅ Submit Button — same for both types */}
               <button
                 type="submit"
                 disabled={isSubmitting || paymentLoading}
@@ -1217,9 +1190,7 @@ if (!formData.doctorId) return toast.error('Please select a doctor');
                   width: '100%', padding: '17px 24px',
                   background: isSubmitting || paymentLoading
                     ? '#9CA3AF'
-                    : formData.appointmentType === 'Online'
-                      ? 'linear-gradient(135deg, #6B0000, #9b0000)'
-                      : 'linear-gradient(135deg, #059669, #0F766E)',
+                    : 'linear-gradient(135deg, #6B0000, #9b0000)',
                   color: '#fff', border: 'none', borderRadius: 14,
                   fontSize: 17, fontWeight: 800,
                   cursor: isSubmitting || paymentLoading ? 'not-allowed' : 'pointer',
@@ -1227,24 +1198,18 @@ if (!formData.doctorId) return toast.error('Please select a doctor');
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                   boxShadow: isSubmitting || paymentLoading
                     ? 'none'
-                    : formData.appointmentType === 'Online'
-                      ? '0 8px 25px rgba(107,0,0,0.35)'
-                      : '0 8px 25px rgba(5,150,105,0.35)',
+                    : '0 8px 25px rgba(107,0,0,0.35)',
                   transition: 'all 0.3s cubic-bezier(0.25,0.46,0.45,0.94)',
                 }}
                 onMouseEnter={e => {
                   if (!isSubmitting && !paymentLoading) {
                     e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = formData.appointmentType === 'Online'
-                      ? '0 14px 35px rgba(107,0,0,0.45)'
-                      : '0 14px 35px rgba(5,150,105,0.45)';
+                    e.currentTarget.style.boxShadow = '0 14px 35px rgba(107,0,0,0.45)';
                   }
                 }}
                 onMouseLeave={e => {
                   e.currentTarget.style.transform = 'none';
-                  e.currentTarget.style.boxShadow = formData.appointmentType === 'Online'
-                    ? '0 8px 25px rgba(107,0,0,0.35)'
-                    : '0 8px 25px rgba(5,150,105,0.35)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(107,0,0,0.35)';
                 }}
               >
                 {isSubmitting || paymentLoading ? (
@@ -1252,24 +1217,20 @@ if (!formData.doctorId) return toast.error('Please select a doctor');
                     <div style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.4)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
                     Processing...
                   </>
-                ) : formData.appointmentType === 'Online'
-                  // ✅ Dynamic fee on submit button
-                  ? `💳 Pay ₹${formData.department ? deptFee : '—'} & Book Appointment`
-                  : '📅 Request Appointment'
-                }
+                ) : (
+                  // ✅ Same label for both types
+                  `💳 Pay ₹${formData.department ? deptFee : '—'} & Book Appointment`
+                )}
               </button>
 
-              {formData.appointmentType === 'Online' && (
-                <p style={{ textAlign: 'center', fontSize: 11, color: '#9CA3AF', marginTop: 12, lineHeight: 1.6 }}>
-                  🔒 Secured by Razorpay · 256-bit SSL Encryption<br />
-                  UPI · GPay · PhonePe · Paytm · QR Code · Card · NetBanking
-                </p>
-              )}
+              <p style={{ textAlign: 'center', fontSize: 11, color: '#9CA3AF', marginTop: 12, lineHeight: 1.6 }}>
+                🔒 Secured by Razorpay · 256-bit SSL Encryption<br />
+                UPI · GPay · PhonePe · Paytm · QR Code · Card · NetBanking
+              </p>
             </div>
           </form>
 
           {/* ── RIGHT: INFO PANEL ── */}
-          {/* ✅ Pass deptFee to InfoPanel */}
           <InfoPanel
             appointmentType={formData.appointmentType}
             formData={formData}

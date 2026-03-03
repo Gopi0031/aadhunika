@@ -4,10 +4,28 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import {
-  Calendar, Clock, User, Phone, Mail, LogOut,
-  Stethoscope, CheckCircle, XCircle, AlertCircle,
-  TrendingUp, Users, CalendarDays, Menu, X, Pencil, Check,
+  Calendar, User, Phone, Mail, LogOut,
+  Stethoscope, CheckCircle, XCircle,
+  TrendingUp, CalendarDays, Menu, X, Pencil, Check,
+  Clock, Activity, ChevronRight, Bell,
 } from 'lucide-react';
+
+/* ── Spinner keyframe injected once ── */
+const SpinnerStyle = () => (
+  <style>{`
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes fadeSlideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes expandIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .dd-fade { animation: fadeSlideUp 0.35s ease both; }
+    .dd-expand { animation: expandIn 0.2s ease both; }
+    .dd-nav-btn:hover { background: rgba(255,255,255,0.1) !important; color: #fff !important; }
+    .dd-stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+    .dd-booking-row:hover { background: #F8FAFC !important; }
+    .dd-pill:hover { border-color: #0F766E !important; color: #0F766E !important; }
+    .dd-action-btn:hover { filter: brightness(0.93); transform: translateY(-1px); }
+    .dd-zoom-link:hover { text-decoration: underline; }
+  `}</style>
+);
 
 export default function DoctorDashboard() {
   const router = useRouter();
@@ -24,543 +42,608 @@ export default function DoctorDashboard() {
     new Date().toISOString().split('T')[0]
   );
 
-  // ── Auth check ──
-// AFTER ✅
-useEffect(() => {
-  const searchParams = new URLSearchParams(window.location.search);
-  const id = searchParams.get('id');
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (!id) { router.push('/login'); return; }
+    const stored = localStorage.getItem(`doctorSession_${id}`);
+    if (!stored) { router.push('/login'); return; }
+    const doc = JSON.parse(stored);
+    setDoctor(doc);
+    setEditData({ name: doc.name, phone: doc.phone, specialization: doc.specialization });
+    fetchBookings(doc.dept, doc._id);
+  }, []);
 
-  if (!id) { router.push('/doctor/login'); return; }
+  const fetchBookings = async (dept, docId) => {
+    try {
+      const url = docId ? `/api/booking?doctorId=${docId}` : `/api/booking?dept=${dept}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error();
+      setBookings(await res.json());
+    } catch { toast.error('Failed to load bookings'); }
+    finally { setLoading(false); }
+  };
 
-  const stored = localStorage.getItem(`doctorSession_${id}`);
-  if (!stored) { router.push('/doctor/login'); return; }
-
-  const doc = JSON.parse(stored);
-  setDoctor(doc);
-  setEditData({ name: doc.name, phone: doc.phone, specialization: doc.specialization });
-  fetchBookings(doc.dept, doc._id);
-}, []);
-
-  // ✅ FIXED
-const fetchBookings = async (dept, docId) => {
-  try {
-   const url = docId ? `/api/booking?doctorId=${docId}` : `/api/booking?dept=${dept}`;
-const res = await fetch(url);
-if (!res.ok) throw new Error();
-const data = await res.json();
-setBookings(data);
-    setBookings(data);
-  } catch {
-    toast.error('Failed to load bookings');
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-const handleLogout = () => {
-  const searchParams = new URLSearchParams(window.location.search);
-  const id = searchParams.get('id');
-  if (id) localStorage.removeItem(`doctorSession_${id}`);
-  router.push('/doctor/login');
-};
+  const handleLogout = () => {
+    const id = new URLSearchParams(window.location.search).get('id');
+    if (id) localStorage.removeItem(`doctorSession_${id}`);
+    router.push('/login');
+  };
 
   const handleUpdateStatus = async (bookingId, status) => {
     try {
       const res = await fetch('/api/booking', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: bookingId, status }),
       });
       if (res.ok) {
         const data = await res.json();
-        setBookings(prev =>
-          prev.map(b => b._id === bookingId
-            ? {
-                ...b,
-                status,
-                meetingLink:     data.meetingLink     || b.meetingLink,
-                meetingId:       data.meetingId       || b.meetingId,
-                meetingPassword: data.meetingPassword || b.meetingPassword,
-              }
-            : b
-          )
-        );
+        setBookings(prev => prev.map(b => b._id === bookingId
+          ? { ...b, status,
+              meetingLink:     data.meetingLink     || b.meetingLink,
+              meetingId:       data.meetingId       || b.meetingId,
+              meetingPassword: data.meetingPassword || b.meetingPassword,
+            } : b
+        ));
         toast.success(
           status === 'confirmed' && data.meetingLink
-            ? '✅ Confirmed! Zoom link sent to patient.'
-            : `Booking ${status}`
+            ? '✅ Confirmed! Zoom link sent.' : `Booking ${status}`
         );
       }
-    } catch {
-      toast.error('Failed to update status');
-    }
+    } catch { toast.error('Failed to update status'); }
   };
 
   const handleSaveProfile = async () => {
-    if (!editData.name.trim()) return toast.error('Name required');
+    if (!editData.name?.trim()) return toast.error('Name required');
     setSaving(true);
     try {
       const res = await fetch(`/api/doctors?id=${doctor._id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...doctor, ...editData }),
       });
       if (res.ok) {
         const updated = { ...doctor, ...editData };
-        localStorage.setItem('doctorSession', JSON.stringify(updated));
-        setDoctor(updated);
-        setEditMode(false);
-        toast.success('Profile updated');
+        localStorage.setItem(`doctorSession_${doctor._id}`, JSON.stringify(updated));
+        setDoctor(updated); setEditMode(false);
+        toast.success('Profile updated!');
       }
-    } catch {
-      toast.error('Failed to save');
-    } finally {
-      setSaving(false);
-    }
+    } catch { toast.error('Failed to save'); }
+    finally { setSaving(false); }
   };
 
-  // ── Computed stats ──
   const today             = new Date().toISOString().split('T')[0];
   const todayBookings     = bookings.filter(b => b.date === today);
   const pendingBookings   = bookings.filter(b => b.status === 'pending');
   const confirmedBookings = bookings.filter(b => b.status === 'confirmed');
+  const completedBookings = bookings.filter(b => b.status === 'completed');
   const dateBookings      = bookings.filter(b => b.date === selectedDate);
+  const filteredBookings  = filterStatus === 'all'
+    ? bookings : bookings.filter(b => b.status === filterStatus);
 
-  // ── Filtered bookings for "All Bookings" tab ──
-  const filteredBookings = bookings.filter(b =>
-    filterStatus === 'all' ? true : b.status === filterStatus
-  );
+  const greeting = new Date().getHours() < 12 ? 'Morning'
+    : new Date().getHours() < 17 ? 'Afternoon' : 'Evening';
 
-  if (!doctor) return null;
-
-  // ── Styles ──
-  const inp = {
-    padding: '10px 14px', borderRadius: 10, border: '1.5px solid #CBD5E1',
-    fontSize: 14, fontFamily: 'inherit', outline: 'none',
-    width: '100%', boxSizing: 'border-box', background: '#fff',
-  };
-
-  const statusColor = (s) => ({
-    pending:   { bg: '#FEF3C7', color: '#D97706',  border: '#FDE68A' },
-    confirmed: { bg: '#D1FAE5', color: '#059669',  border: '#A7F3D0' },
-    cancelled: { bg: '#FEE2E2', color: '#EF4444',  border: '#FECACA' },
-    completed: { bg: '#E0F2FE', color: '#0369A1',  border: '#BAE6FD' },
+  const statusMeta = (s) => ({
+    pending:   { bg: '#FEF3C7', color: '#D97706', border: '#FDE68A' },
+    confirmed: { bg: '#D1FAE5', color: '#059669', border: '#A7F3D0' },
+    cancelled: { bg: '#FEE2E2', color: '#EF4444', border: '#FECACA' },
+    completed: { bg: '#E0F2FE', color: '#0369A1', border: '#BAE6FD' },
   }[s] || { bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0' });
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard',   icon: TrendingUp  },
-    { id: 'schedule',  label: 'My Schedule', icon: CalendarDays },
-    { id: 'bookings',  label: 'All Bookings',icon: Calendar    },
-    { id: 'profile',   label: 'My Profile',  icon: User        },
+    { id: 'dashboard', label: 'Dashboard',    icon: TrendingUp   },
+    { id: 'schedule',  label: 'My Schedule',  icon: CalendarDays },
+    { id: 'bookings',  label: 'All Bookings', icon: Calendar     },
+    { id: 'profile',   label: 'My Profile',   icon: User         },
   ];
 
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Segoe UI', sans-serif", background: '#F8FAFC' }}>
+  if (!doctor) return null;
 
-      {/* ── SIDEBAR OVERLAY ── */}
-      {sidebarOpen && (
-        <div onClick={() => setSidebarOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 40 }} />
-      )}
+  /* ── Shared inline style objects ── */
+  const S = {
+    /* layout */
+    root:   { display:'flex', minHeight:'100vh', fontFamily:"'Segoe UI',sans-serif", background:'#F1F5F9', color:'#0F172A' },
+    overlay:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:40 },
+
+    /* sidebar */
+    sidebar: (open) => ({
+      width: 260, background:'linear-gradient(180deg,#0F766E 0%,#065F46 100%)',
+      display:'flex', flexDirection:'column', flexShrink:0,
+      position:'fixed', top:0, left:0, bottom:0, zIndex:50,
+      transform: open ? 'translateX(0)' : 'translateX(-100%)',
+      transition:'transform 0.3s cubic-bezier(0.16,1,0.3,1)',
+      boxShadow:'4px 0 24px rgba(0,0,0,0.18)',
+    }),
+    sidebarHeader: {
+      padding:'22px 16px 18px', borderBottom:'1px solid rgba(255,255,255,0.1)',
+      display:'flex', alignItems:'center', gap:12,
+    },
+    avatarLg: {
+      width:46, height:46, borderRadius:14, flexShrink:0,
+      background:'rgba(255,255,255,0.2)', border:'2px solid rgba(255,255,255,0.3)',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      fontSize:20, fontWeight:800, color:'#fff',
+    },
+    navBtn: (active) => ({
+      display:'flex', alignItems:'center', gap:11,
+      padding:'11px 13px', borderRadius:11, border:'none',
+      background: active ? 'rgba(255,255,255,0.2)' : 'transparent',
+      color: active ? '#fff' : 'rgba(255,255,255,0.65)',
+      fontWeight: active ? 700 : 500, fontSize:14,
+      cursor:'pointer', fontFamily:'inherit', textAlign:'left',
+      transition:'all 0.2s', width:'100%',
+    }),
+    logoutBtn: {
+      display:'flex', alignItems:'center', gap:9, width:'100%',
+      padding:'11px 13px', borderRadius:11,
+      background:'rgba(239,68,68,0.18)', border:'none',
+      color:'#FCA5A5', fontWeight:700, fontSize:14,
+      cursor:'pointer', fontFamily:'inherit', marginTop:8,
+    },
+
+    /* topbar */
+    topbar: {
+      background:'#fff', borderBottom:'1px solid #E2E8F0',
+      padding:'0 20px', height:64,
+      display:'flex', alignItems:'center', justifyContent:'space-between',
+      position:'sticky', top:0, zIndex:30,
+      boxShadow:'0 1px 6px rgba(0,0,0,0.05)', gap:12,
+    },
+    iconBtn: {
+      background:'none', border:'none', cursor:'pointer',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      color:'#64748B', padding:6, borderRadius:8,
+    },
+    doctorChip: {
+      display:'flex', alignItems:'center', gap:8,
+      background:'#F0FDFA', border:'1px solid #CCFBF1',
+      borderRadius:10, padding:'6px 12px',
+    },
+    avatarSm: {
+      width:26, height:26, borderRadius:8,
+      background:'#0F766E', color:'#fff',
+      fontSize:12, fontWeight:800,
+      display:'flex', alignItems:'center', justifyContent:'center',
+    },
+
+    /* cards */
+    card: {
+      background:'#fff', borderRadius:18, border:'1px solid #E2E8F0',
+      boxShadow:'0 2px 10px rgba(0,0,0,0.04)', overflow:'hidden',
+    },
+    cardHeader: {
+      display:'flex', alignItems:'center', justifyContent:'space-between',
+      padding:'18px 22px', borderBottom:'1px solid #E2E8F0', gap:10,
+    },
+    cardTitle: {
+      display:'flex', alignItems:'center', gap:8,
+      fontSize:15, fontWeight:800, color:'#0F172A', margin:0,
+    },
+    countChip: {
+      background:'#F0FDFA', color:'#0F766E', border:'1px solid #CCFBF1',
+      borderRadius:20, padding:'2px 12px', fontSize:12, fontWeight:800,
+    },
+
+    /* stat */
+    statCard: {
+      background:'#fff', borderRadius:16, padding:'20px 18px',
+      border:'1px solid #E2E8F0', boxShadow:'0 2px 8px rgba(0,0,0,0.04)',
+      position:'relative', overflow:'hidden', cursor:'default',
+      transition:'transform 0.2s ease, box-shadow 0.2s ease',
+    },
+
+    /* form */
+    input: {
+      padding:'10px 14px', borderRadius:10,
+      border:'1.5px solid #CBD5E1', fontSize:14,
+      fontFamily:'inherit', outline:'none',
+      width:'100%', boxSizing:'border-box', background:'#fff',
+      color:'#0F172A',
+    },
+    btnPrimary: {
+      display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+      padding:'12px 20px', borderRadius:11, border:'none',
+      background:'linear-gradient(135deg,#0F766E,#059669)',
+      color:'#fff', fontWeight:800, fontSize:14,
+      cursor:'pointer', fontFamily:'inherit',
+    },
+    btnGhost: {
+      padding:'12px 20px', borderRadius:11,
+      border:'1.5px solid #CBD5E1', background:'#F1F5F9',
+      color:'#64748B', fontWeight:700, fontSize:14,
+      cursor:'pointer', fontFamily:'inherit',
+    },
+  };
+
+  return (
+    <div style={S.root}>
+      <SpinnerStyle />
+
+      {/* Overlay */}
+      {sidebarOpen && <div style={S.overlay} onClick={() => setSidebarOpen(false)} />}
 
       {/* ── SIDEBAR ── */}
-      <aside style={{
-        width: 260,
-        background: 'linear-gradient(180deg, #0F766E 0%, #065F46 100%)',
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
-        position: 'fixed', top: 0, left: 0, bottom: 0, zIndex: 50,
-        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-        transition: 'transform 0.3s ease',
-      }}>
-        {/* Sidebar Header */}
-        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 20, fontWeight: 800, color: '#fff',
-              }}>
-                {doctor.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p style={{ margin: 0, fontWeight: 700, color: '#fff', fontSize: 14 }}>{doctor.name}</p>
-                <p style={{ margin: 0, fontSize: 11, color: 'rgba(255,255,255,0.7)' }}>{doctor.dept}</p>
-              </div>
-            </div>
-            <button onClick={() => setSidebarOpen(false)}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.7)', cursor: 'pointer', display: 'flex' }}>
-              <X size={18} />
-            </button>
+      <aside style={S.sidebar(sidebarOpen)}>
+        <div style={S.sidebarHeader}>
+          <div style={S.avatarLg}>{doctor.name.charAt(0).toUpperCase()}</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <p style={{ margin:0, fontWeight:700, color:'#fff', fontSize:14,
+              whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+              {doctor.name}
+            </p>
+            <p style={{ margin:'2px 0 0', fontSize:11, color:'rgba(255,255,255,0.65)' }}>
+              {doctor.dept}
+            </p>
+            <span style={{ fontSize:10, color:'#6EE7B7', fontWeight:700 }}>● Online</span>
           </div>
+          <button style={S.iconBtn} onClick={() => setSidebarOpen(false)}>
+            <X size={18} color="rgba(255,255,255,0.7)" />
+          </button>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {menuItems.map(item => {
-            const active = activeSection === item.id;
-            return (
-              <button key={item.id}
-                onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 12,
-                  padding: '11px 14px', borderRadius: 10, border: 'none',
-                  background: active ? 'rgba(255,255,255,0.2)' : 'transparent',
-                  color: active ? '#fff' : 'rgba(255,255,255,0.7)',
-                  fontWeight: active ? 700 : 500, fontSize: 14,
-                  cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.2s',
-                  textAlign: 'left',
-                }}>
-                <item.icon size={18} />
-                {item.label}
-                {item.id === 'bookings' && pendingBookings.length > 0 && (
-                  <span style={{
-                    marginLeft: 'auto', background: '#FBBF24', color: '#78350F',
-                    borderRadius: 20, padding: '2px 8px', fontSize: 11, fontWeight: 800,
-                  }}>
-                    {pendingBookings.length}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+        <nav style={{ flex:1, padding:'14px 10px', display:'flex', flexDirection:'column', gap:3, overflowY:'auto' }}>
+          {menuItems.map(item => (
+            <button
+              key={item.id}
+              className="dd-nav-btn"
+              style={S.navBtn(activeSection === item.id)}
+              onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
+            >
+              <item.icon size={17} />
+              <span style={{ flex:1 }}>{item.label}</span>
+              {item.id === 'bookings' && pendingBookings.length > 0 && (
+                <span style={{ background:'#FBBF24', color:'#78350F', borderRadius:20,
+                  padding:'1px 8px', fontSize:11, fontWeight:800 }}>
+                  {pendingBookings.length}
+                </span>
+              )}
+              <ChevronRight size={13} color="rgba(255,255,255,0.4)" />
+            </button>
+          ))}
         </nav>
 
-        {/* Logout */}
-        <div style={{ padding: '16px 12px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <button onClick={handleLogout} style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            width: '100%', padding: '11px 14px', borderRadius: 10,
-            background: 'rgba(239,68,68,0.2)', border: 'none',
-            color: '#FCA5A5', fontWeight: 700, fontSize: 14,
-            cursor: 'pointer', fontFamily: 'inherit',
-          }}>
-            <LogOut size={18} /> Logout
+        {/* Sidebar footer */}
+        <div style={{ padding:'14px 10px', borderTop:'1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', padding:'6px 8px',
+            fontSize:12, color:'rgba(255,255,255,0.6)' }}>
+            <span>Total Seen</span>
+            <strong style={{ color:'#fff' }}>{completedBookings.length}</strong>
+          </div>
+          <div style={{ display:'flex', justifyContent:'space-between', padding:'6px 8px',
+            fontSize:12, color:'rgba(255,255,255,0.6)' }}>
+            <span>Pending</span>
+            <strong style={{ color:'#FBBF24' }}>{pendingBookings.length}</strong>
+          </div>
+          <button style={S.logoutBtn} onClick={handleLogout}>
+            <LogOut size={16} /> Logout
           </button>
         </div>
       </aside>
 
-      {/* ── MAIN CONTENT ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: 0 }}>
+      {/* ── MAIN ── */}
+      <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
 
         {/* Topbar */}
-        <header style={{
-          background: '#fff', borderBottom: '1px solid #E2E8F0',
-          padding: '0 24px', height: 64,
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          position: 'sticky', top: 0, zIndex: 30,
-          boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <button onClick={() => setSidebarOpen(true)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', color: '#374151' }}>
+        <header style={S.topbar}>
+          <div style={{ display:'flex', alignItems:'center', gap:14, minWidth:0 }}>
+            <button style={S.iconBtn} onClick={() => setSidebarOpen(true)}>
               <Menu size={22} />
             </button>
-            <div>
-              <h1 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: '#0F172A' }}>
+            <div style={{ minWidth:0 }}>
+              <h1 style={{ margin:0, fontSize:17, fontWeight:800, color:'#0F172A',
+                whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                 {menuItems.find(m => m.id === activeSection)?.label}
               </h1>
-              <p style={{ margin: 0, fontSize: 12, color: '#64748B' }}>
+              <p style={{ margin:0, fontSize:11, color:'#64748B' }}>
                 Doctor Portal · {doctor.dept}
               </p>
             </div>
           </div>
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            background: '#F0FDFA', border: '1px solid #CCFBF1',
-            borderRadius: 10, padding: '8px 14px',
-          }}>
-            <Stethoscope size={16} color="#0F766E" />
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#0F766E' }}>{doctor.name}</span>
+          <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
+            {pendingBookings.length > 0 && (
+              <div style={{ position:'relative', display:'flex', alignItems:'center',
+                justifyContent:'center', width:38, height:38, borderRadius:10,
+                background:'#FEF3C7', color:'#D97706', cursor:'pointer' }}>
+                <Bell size={17} />
+                <span style={{ position:'absolute', top:-4, right:-4, background:'#EF4444',
+                  color:'#fff', borderRadius:'50%', width:16, height:16,
+                  fontSize:9, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                  {pendingBookings.length}
+                </span>
+              </div>
+            )}
+            <div style={S.doctorChip}>
+              <div style={S.avatarSm}>{doctor.name.charAt(0)}</div>
+              <span style={{ fontSize:13, fontWeight:700, color:'#0F766E' }}>
+                {doctor.name.split(' ')[0]}
+              </span>
+            </div>
           </div>
         </header>
 
         {/* Content */}
-        <main style={{ flex: 1, padding: 'clamp(16px,3vw,32px)', maxWidth: 1100, width: '100%', margin: '0 auto' }}>
+        <main style={{ flex:1, padding:'clamp(16px,3vw,28px)',
+          maxWidth:1080, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
+
           {loading ? (
-            <div style={{ textAlign: 'center', padding: 60, color: '#64748B' }}>
-              <div style={{
-                width: 40, height: 40, margin: '0 auto 16px',
-                border: '3px solid #CCFBF1', borderTopColor: '#0F766E',
-                borderRadius: '50%', animation: 'spin 0.8s linear infinite',
-              }} />
-              <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-              Loading your data...
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
+              justifyContent:'center', padding:80, color:'#64748B', gap:16 }}>
+              <div style={{ width:38, height:38, border:'3px solid #CCFBF1',
+                borderTopColor:'#0F766E', borderRadius:'50%',
+                animation:'spin 0.8s linear infinite' }} />
+              <p style={{ fontWeight:600, margin:0 }}>Loading your data...</p>
             </div>
           ) : (
             <>
-              {/* ══ DASHBOARD HOME ══ */}
+              {/* ══ DASHBOARD ══ */}
               {activeSection === 'dashboard' && (
-                <div>
+                <div className="dd-fade">
                   {/* Welcome Banner */}
                   <div style={{
-                    background: 'linear-gradient(135deg, #0F766E, #059669)',
-                    borderRadius: 20, padding: 'clamp(20px,3vw,32px)',
-                    marginBottom: 24, color: '#fff',
-                    display: 'flex', justifyContent: 'space-between',
-                    alignItems: 'center', flexWrap: 'wrap', gap: 16,
+                    background:'linear-gradient(135deg,#0F766E 0%,#059669 60%,#0284C7 100%)',
+                    borderRadius:20, padding:'clamp(20px,3vw,30px)',
+                    marginBottom:22, color:'#fff',
+                    display:'flex', justifyContent:'space-between',
+                    alignItems:'center', flexWrap:'wrap', gap:16,
+                    position:'relative', overflow:'hidden',
                   }}>
                     <div>
-                      <h2 style={{ margin: '0 0 6px', fontSize: 'clamp(18px,3vw,24px)', fontWeight: 800 }}>
-                        Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 17 ? 'Afternoon' : 'Evening'},{' '}
-                        {doctor.name.split(' ')[0]}! 👋
+                      <h2 style={{ margin:'0 0 6px', fontSize:'clamp(17px,3vw,22px)',
+                        fontWeight:800 }}>
+                        Good {greeting}, {doctor.name.split(' ')[0]}! 👋
                       </h2>
-                      <p style={{ margin: 0, fontSize: 14, opacity: 0.85 }}>
+                      <p style={{ margin:0, fontSize:13, opacity:0.82 }}>
                         {doctor.dept} · {doctor.specialization || 'Specialist'}
                       </p>
                     </div>
-                    <div style={{ fontSize: 13, opacity: 0.9, textAlign: 'right' }}>
-                      <p style={{ margin: 0, fontWeight: 700 }}>
-                        📅 {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <p style={{ margin:0, fontWeight:800, fontSize:15 }}>
+                        {new Date().toLocaleDateString('en-IN', { weekday:'long' })}
                       </p>
-                      <p style={{ margin: '4px 0 0' }}>
-                        Today's appointments: <strong>{todayBookings.length}</strong>
+                      <p style={{ margin:'3px 0 0', fontSize:12, opacity:0.8 }}>
+                        {new Date().toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' })}
                       </p>
+                      <div style={{ display:'flex', alignItems:'center', gap:5, justifyContent:'flex-end',
+                        marginTop:7, background:'rgba(255,255,255,0.15)',
+                        padding:'4px 10px', borderRadius:20, fontSize:12 }}>
+                        <Clock size={12} /> {todayBookings.length} today
+                      </div>
                     </div>
                   </div>
 
                   {/* Stats */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 14, marginBottom: 28 }}>
+                  <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(155px,1fr))',
+                    gap:14, marginBottom:22 }}>
                     {[
-                      { label: 'Total Bookings',   value: bookings.length,           icon: '📋', color: '#3B82F6' },
-                      { label: "Today's Patients", value: todayBookings.length,       icon: '📅', color: '#0F766E' },
-                      { label: 'Pending',          value: pendingBookings.length,     icon: '⏳', color: '#D97706' },
-                      { label: 'Confirmed',        value: confirmedBookings.length,   icon: '✅', color: '#16A34A' },
+                      { label:'Total Bookings',   value:bookings.length,          icon:'📋', color:'#3B82F6', bar:'#3B82F6' },
+                      { label:"Today's Patients", value:todayBookings.length,      icon:'📅', color:'#0F766E', bar:'#0F766E' },
+                      { label:'Pending',          value:pendingBookings.length,    icon:'⏳', color:'#D97706', bar:'#FBBF24' },
+                      { label:'Confirmed',        value:confirmedBookings.length,  icon:'✅', color:'#059669', bar:'#059669' },
                     ].map((s, i) => (
-                      <div key={i} style={{
-                        background: '#fff', borderRadius: 16, padding: '18px 20px',
-                        border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                      }}>
-                        <div style={{ fontSize: 28, marginBottom: 8 }}>{s.icon}</div>
-                        <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: s.color }}>{s.value}</p>
-                        <p style={{ margin: '4px 0 0', fontSize: 13, color: '#64748B', fontWeight: 600 }}>{s.label}</p>
+                      <div key={i} className="dd-stat-card" style={S.statCard}>
+                        <div style={{ fontSize:24, marginBottom:10 }}>{s.icon}</div>
+                        <div style={{ fontSize:30, fontWeight:900, color:s.color }}>{s.value}</div>
+                        <div style={{ fontSize:12, color:'#64748B', fontWeight:600, marginTop:4 }}>{s.label}</div>
+                        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:3,
+                          background:s.bar, borderRadius:'0 0 16px 16px' }} />
                       </div>
                     ))}
                   </div>
 
-                  {/* Today's Appointments */}
-                  <div style={{
-                    background: '#fff', borderRadius: 16, padding: 24,
-                    border: '1px solid #E2E8F0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  }}>
-                    <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 800, color: '#0F172A', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      📅 Today's Appointments
-                      <span style={{ fontSize: 12, background: '#F0FDFA', color: '#0F766E', padding: '2px 10px', borderRadius: 20, fontWeight: 700 }}>
-                        {todayBookings.length}
-                      </span>
-                    </h3>
-                    {todayBookings.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '30px 20px', color: '#94A3B8' }}>
-                        <div style={{ fontSize: 36, marginBottom: 10 }}>🎉</div>
-                        <p style={{ fontWeight: 600, margin: 0 }}>No appointments today</p>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {todayBookings.map(b => (
-                          <BookingCard key={b._id} booking={b} onStatus={handleUpdateStatus} statusColor={statusColor} />
+                  {/* Today's appointments */}
+                  <div style={S.card}>
+                    <div style={S.cardHeader}>
+                      <h3 style={S.cardTitle}><CalendarDays size={17} /> Today's Appointments</h3>
+                      <span style={S.countChip}>{todayBookings.length}</span>
+                    </div>
+                    {todayBookings.length === 0
+                      ? <EmptyState icon="🎉" msg="No appointments today — enjoy your day!" />
+                      : todayBookings.map(b => (
+                          <BookingCard key={b._id} booking={b}
+                            onStatus={handleUpdateStatus} statusMeta={statusMeta} />
                         ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
 
               {/* ══ SCHEDULE ══ */}
               {activeSection === 'schedule' && (
-                <div>
-                  <div style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #E2E8F0', marginBottom: 20 }}>
-                    <h3 style={{ margin: '0 0 16px', fontSize: 16, fontWeight: 800, color: '#0F172A' }}>📅 Filter by Date</h3>
-                    <input
-                      type="date"
-                      value={selectedDate}
-                      onChange={e => setSelectedDate(e.target.value)}
-                      style={{ ...inp, maxWidth: 220 }}
-                    />
+                <div className="dd-fade">
+                  <div style={{ ...S.card, marginBottom:20 }}>
+                    <div style={S.cardHeader}>
+                      <h3 style={S.cardTitle}><CalendarDays size={17} /> Pick a Date</h3>
+                    </div>
+                    <div style={{ padding:'16px 22px 20px' }}>
+                      <input
+                        type="date" value={selectedDate}
+                        onChange={e => setSelectedDate(e.target.value)}
+                        style={{ ...S.input, maxWidth:240 }}
+                      />
+                    </div>
                   </div>
 
-                  <div style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #E2E8F0' }}>
-                    <h3 style={{ margin: '0 0 18px', fontSize: 16, fontWeight: 800, color: '#0F172A' }}>
-                      Appointments on{' '}
-                      {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-IN', {
-                        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-                      })}
-                      <span style={{ marginLeft: 10, fontSize: 13, background: '#F0FDFA', color: '#0F766E', padding: '2px 10px', borderRadius: 20, fontWeight: 700 }}>
-                        {dateBookings.length}
-                      </span>
-                    </h3>
-                    {dateBookings.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '30px 20px', color: '#94A3B8' }}>
-                        <div style={{ fontSize: 36, marginBottom: 10 }}>📭</div>
-                        <p style={{ fontWeight: 600, margin: 0 }}>No appointments on this date</p>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {dateBookings
-                          .sort((a, b) => a.time?.localeCompare(b.time))
+                  <div style={S.card}>
+                    <div style={S.cardHeader}>
+                      <h3 style={S.cardTitle}>
+                        <Activity size={17} />
+                        {new Date(selectedDate + 'T00:00:00').toLocaleDateString('en-IN', {
+                          weekday:'long', day:'numeric', month:'long', year:'numeric',
+                        })}
+                      </h3>
+                      <span style={S.countChip}>{dateBookings.length}</span>
+                    </div>
+                    {dateBookings.length === 0
+                      ? <EmptyState icon="📭" msg="No appointments on this date" />
+                      : [...dateBookings]
+                          .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
                           .map(b => (
-                            <BookingCard key={b._id} booking={b} onStatus={handleUpdateStatus} statusColor={statusColor} />
+                            <BookingCard key={b._id} booking={b}
+                              onStatus={handleUpdateStatus} statusMeta={statusMeta} />
                           ))}
-                      </div>
-                    )}
                   </div>
                 </div>
               )}
 
               {/* ══ ALL BOOKINGS ══ */}
               {activeSection === 'bookings' && (
-                <div style={{ background: '#fff', borderRadius: 16, padding: 24, border: '1px solid #E2E8F0' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
-                    <h3 style={{ margin: 0, fontSize: 16, fontWeight: 800, color: '#0F172A' }}>
-                      All Bookings — {doctor.dept}
-                    </h3>
-                    <span style={{ fontSize: 13, background: '#F0FDFA', color: '#0F766E', padding: '4px 14px', borderRadius: 20, fontWeight: 700, border: '1px solid #CCFBF1' }}>
-                      {filteredBookings.length} total
-                    </span>
+                <div className="dd-fade" style={S.card}>
+                  <div style={S.cardHeader}>
+                    <h3 style={S.cardTitle}><Calendar size={17} /> All Bookings</h3>
+                    <span style={S.countChip}>{filteredBookings.length}</span>
                   </div>
 
-                  {/* Status filter pills — now functional */}
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
-                    {['all', 'pending', 'confirmed', 'cancelled', 'completed'].map(s => {
-                      const count = s === 'all' ? bookings.length : bookings.filter(b => b.status === s).length;
+                  {/* Filter pills */}
+                  <div style={{ display:'flex', gap:7, flexWrap:'wrap',
+                    padding:'14px 22px', borderBottom:'1px solid #E2E8F0' }}>
+                    {['all','pending','confirmed','cancelled','completed'].map(s => {
+                      const count = s === 'all' ? bookings.length
+                        : bookings.filter(b => b.status === s).length;
                       const active = filterStatus === s;
                       return (
                         <button key={s}
+                          className="dd-pill"
                           onClick={() => setFilterStatus(s)}
                           style={{
-                            padding: '5px 14px', borderRadius: 20,
-                            border: active ? '2px solid #0F766E' : '1px solid #E2E8F0',
+                            display:'flex', alignItems:'center', gap:5,
+                            padding:'5px 13px', borderRadius:20,
+                            border: active ? '2px solid #0F766E' : '1.5px solid #E2E8F0',
                             background: active ? '#0F766E' : '#F1F5F9',
                             color: active ? '#fff' : '#64748B',
-                            fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                            textTransform: 'capitalize', fontFamily: 'inherit',
-                            transition: 'all 0.2s',
+                            fontSize:12, fontWeight:700, cursor:'pointer',
+                            fontFamily:'inherit', transition:'all 0.2s', whiteSpace:'nowrap',
                           }}>
-                          {s === 'all' ? `All (${count})` : `${s} (${count})`}
+                          {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
+                          <span style={{
+                            background: active ? 'rgba(255,255,255,0.25)' : '#E2E8F0',
+                            color: active ? '#fff' : '#64748B',
+                            borderRadius:20, padding:'0 6px', fontSize:10, fontWeight:800,
+                          }}>
+                            {count}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
 
-                  {filteredBookings.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '40px 20px', color: '#94A3B8' }}>
-                      <div style={{ fontSize: 40, marginBottom: 12 }}>📋</div>
-                      <p style={{ fontWeight: 600, margin: 0 }}>No bookings found</p>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      {[...filteredBookings]
+                  {filteredBookings.length === 0
+                    ? <EmptyState icon="📋" msg="No bookings found" />
+                    : [...filteredBookings]
                         .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
                         .map(b => (
-                          <BookingCard key={b._id} booking={b} onStatus={handleUpdateStatus} statusColor={statusColor} showDate />
+                          <BookingCard key={b._id} booking={b}
+                            onStatus={handleUpdateStatus} statusMeta={statusMeta} showDate />
                         ))}
-                    </div>
-                  )}
                 </div>
               )}
 
               {/* ══ PROFILE ══ */}
               {activeSection === 'profile' && (
-                <div style={{ maxWidth: 600 }}>
-                  <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', border: '1px solid #E2E8F0', boxShadow: '0 4px 20px rgba(0,0,0,0.06)' }}>
-                    {/* Profile Header */}
-                    <div style={{ background: 'linear-gradient(135deg, #0F766E, #059669)', padding: '32px 28px', textAlign: 'center' }}>
-                      <div style={{
-                        width: 80, height: 80, borderRadius: '50%',
-                        background: 'rgba(255,255,255,0.25)', border: '3px solid rgba(255,255,255,0.5)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 32, fontWeight: 800, color: '#fff', margin: '0 auto 14px',
-                      }}>
+                <div className="dd-fade" style={{ maxWidth:560 }}>
+                  <div style={{ background:'#fff', borderRadius:20, overflow:'hidden',
+                    border:'1px solid #E2E8F0', boxShadow:'0 4px 20px rgba(0,0,0,0.06)' }}>
+
+                    {/* Hero */}
+                    <div style={{ background:'linear-gradient(135deg,#0F766E,#059669)',
+                      padding:'32px 24px', textAlign:'center' }}>
+                      <div style={{ width:80, height:80, borderRadius:24, margin:'0 auto 14px',
+                        background:'rgba(255,255,255,0.22)', border:'3px solid rgba(255,255,255,0.4)',
+                        display:'flex', alignItems:'center', justifyContent:'center',
+                        fontSize:34, fontWeight:900, color:'#fff' }}>
                         {doctor.name.charAt(0).toUpperCase()}
                       </div>
-                      <h2 style={{ margin: '0 0 6px', color: '#fff', fontSize: 22, fontWeight: 800 }}>{doctor.name}</h2>
-                      <p style={{ margin: 0, color: 'rgba(255,255,255,0.85)', fontSize: 14 }}>
+                      <h2 style={{ color:'#fff', fontSize:22, fontWeight:800, margin:'0 0 6px' }}>
+                        {doctor.name}
+                      </h2>
+                      <p style={{ color:'rgba(255,255,255,0.8)', fontSize:13, margin:0 }}>
                         {doctor.specialization || doctor.dept} · {doctor.dept}
                       </p>
+                      <div style={{ display:'flex', justifyContent:'center', gap:28,
+                        marginTop:20, paddingTop:18, borderTop:'1px solid rgba(255,255,255,0.15)' }}>
+                        {[
+                          { label:'Bookings',  value: bookings.length },
+                          { label:'Completed', value: completedBookings.length },
+                          { label:'Pending',   value: pendingBookings.length },
+                        ].map((s,i) => (
+                          <div key={i} style={{ textAlign:'center' }}>
+                            <strong style={{ display:'block', fontSize:22, fontWeight:900, color:'#fff' }}>
+                              {s.value}
+                            </strong>
+                            <span style={{ fontSize:11, color:'rgba(255,255,255,0.7)', fontWeight:600 }}>
+                              {s.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Profile Body */}
-                    <div style={{ padding: '28px' }}>
+                    {/* Body */}
+                    <div style={{ padding:28 }}>
                       {editMode ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                          <p style={{ margin: '0 0 4px', fontSize: 12, fontWeight: 700, color: '#0F766E', textTransform: 'uppercase' }}>✏️ Edit Profile</p>
+                        <div style={{ display:'flex', flexDirection:'column', gap:16 }}>
+                          <p style={{ margin:'0 0 4px', fontSize:12, fontWeight:700,
+                            color:'#0F766E', textTransform:'uppercase' }}>✏️ Edit Profile</p>
                           {[
-                            { label: 'Full Name',       key: 'name',           type: 'text' },
-                            { label: 'Phone',           key: 'phone',          type: 'tel'  },
-                            { label: 'Specialization',  key: 'specialization', type: 'text' },
+                            { label:'Full Name',      key:'name',           type:'text' },
+                            { label:'Phone',          key:'phone',          type:'tel'  },
+                            { label:'Specialization', key:'specialization', type:'text' },
                           ].map(f => (
                             <div key={f.key}>
-                              <label style={{ fontSize: 12, fontWeight: 700, color: '#374151', display: 'block', marginBottom: 6, textTransform: 'uppercase' }}>
+                              <label style={{ fontSize:12, fontWeight:700, color:'#374151',
+                                display:'block', marginBottom:6, textTransform:'uppercase' }}>
                                 {f.label}
                               </label>
-                              <input
-                                type={f.type}
+                              <input type={f.type} style={S.input}
                                 value={editData[f.key] || ''}
-                                onChange={e => setEditData({ ...editData, [f.key]: e.target.value })}
-                                style={inp}
-                              />
+                                onChange={e => setEditData({ ...editData, [f.key]: e.target.value })} />
                             </div>
                           ))}
-                          <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                            <button onClick={() => setEditMode(false)} style={{
-                              flex: 1, padding: '12px', borderRadius: 10,
-                              border: '1.5px solid #CBD5E1', background: '#F1F5F9',
-                              color: '#64748B', fontWeight: 700, cursor: 'pointer',
-                              fontSize: 14, fontFamily: 'inherit',
-                            }}>
+                          <div style={{ display:'flex', gap:10, marginTop:6 }}>
+                            <button style={S.btnGhost} onClick={() => setEditMode(false)}>
                               Cancel
                             </button>
-                            <button onClick={handleSaveProfile} disabled={saving} style={{
-                              flex: 2, padding: '12px', borderRadius: 10, border: 'none',
-                              background: 'linear-gradient(135deg,#0F766E,#059669)', color: '#fff',
-                              fontWeight: 800, cursor: 'pointer', fontSize: 14, fontFamily: 'inherit',
-                              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                            }}>
-                              <Check size={16} /> {saving ? 'Saving...' : 'Save Changes'}
+                            <button style={{ ...S.btnPrimary, flex:2 }}
+                              onClick={handleSaveProfile} disabled={saving}>
+                              <Check size={15} /> {saving ? 'Saving...' : 'Save Changes'}
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <div>
-                          {[
-                            { icon: <User size={16} />,        label: 'Full Name',        value: doctor.name },
-                            { icon: <Mail size={16} />,        label: 'Email',            value: doctor.email },
-                            { icon: <Phone size={16} />,       label: 'Phone',            value: doctor.phone || '—' },
-                            { icon: <Stethoscope size={16} />, label: 'Department',       value: doctor.dept },
-                            { icon: <CheckCircle size={16} />, label: 'Specialization',   value: doctor.specialization || '—' },
-                            { icon: <TrendingUp size={16} />,  label: 'Consultation Fee', value: doctor.fee ? `₹${doctor.fee}` : '—' },
-                          ].map((row, i) => (
-                            <div key={i} style={{
-                              display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0',
-                              borderBottom: i < 5 ? '1px solid #F1F5F9' : 'none',
-                            }}>
-                              <div style={{
-                                width: 36, height: 36, borderRadius: 10, background: '#F0FDFA',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: '#0F766E', flexShrink: 0,
+                        <>
+                          <div>
+                            {[
+                              { icon:<User size={15} />,        label:'Full Name',        value: doctor.name },
+                              { icon:<Mail size={15} />,        label:'Email',            value: doctor.email },
+                              { icon:<Phone size={15} />,       label:'Phone',            value: doctor.phone || '—' },
+                              { icon:<Stethoscope size={15} />, label:'Department',       value: doctor.dept },
+                              { icon:<CheckCircle size={15} />, label:'Specialization',   value: doctor.specialization || '—' },
+                              { icon:<TrendingUp size={15} />,  label:'Consultation Fee', value: doctor.fee ? `₹${doctor.fee}` : '—' },
+                            ].map((row, i, arr) => (
+                              <div key={i} style={{
+                                display:'flex', alignItems:'center', gap:14, padding:'14px 0',
+                                borderBottom: i < arr.length - 1 ? '1px solid #F1F5F9' : 'none',
                               }}>
-                                {row.icon}
+                                <div style={{ width:36, height:36, borderRadius:10, background:'#F0FDFA',
+                                  display:'flex', alignItems:'center', justifyContent:'center',
+                                  color:'#0F766E', flexShrink:0 }}>
+                                  {row.icon}
+                                </div>
+                                <div>
+                                  <p style={{ margin:0, fontSize:11, color:'#94A3B8',
+                                    fontWeight:600, textTransform:'uppercase', letterSpacing:'0.5px' }}>
+                                    {row.label}
+                                  </p>
+                                  <p style={{ margin:'2px 0 0', fontSize:15, fontWeight:600, color:'#1E293B' }}>
+                                    {row.value}
+                                  </p>
+                                </div>
                               </div>
-                              <div>
-                                <p style={{ margin: 0, fontSize: 11, color: '#94A3B8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                  {row.label}
-                                </p>
-                                <p style={{ margin: '2px 0 0', fontSize: 15, fontWeight: 600, color: '#1E293B' }}>{row.value}</p>
-                              </div>
-                            </div>
-                          ))}
-                          <button onClick={() => setEditMode(true)} style={{
-                            marginTop: 20, width: '100%', padding: '13px',
-                            borderRadius: 12, border: 'none',
-                            background: 'linear-gradient(135deg,#0F766E,#059669)',
-                            color: '#fff', fontWeight: 800, fontSize: 15,
-                            cursor: 'pointer', fontFamily: 'inherit',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                          }}>
-                            <Pencil size={16} /> Edit Profile
+                            ))}
+                          </div>
+                          <button style={{ ...S.btnPrimary, width:'100%', marginTop:20 }}
+                            onClick={() => setEditMode(true)}>
+                            <Pencil size={15} /> Edit Profile
                           </button>
-                        </div>
+                        </>
                       )}
                     </div>
                   </div>
@@ -574,155 +657,188 @@ const handleLogout = () => {
   );
 }
 
+/* ── Empty State ── */
+function EmptyState({ icon, msg }) {
+  return (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
+      justifyContent:'center', padding:'48px 20px', color:'#94A3B8', gap:10 }}>
+      <div style={{ fontSize:36 }}>{icon}</div>
+      <p style={{ fontWeight:600, margin:0, fontSize:14 }}>{msg}</p>
+    </div>
+  );
+}
 
-// ══════════════════════════════════════
-// Booking Card Component
-// ══════════════════════════════════════
-function BookingCard({ booking: b, onStatus, statusColor, showDate }) {
-  const s = statusColor(b.status);
+/* ── Booking Card ── */
+function BookingCard({ booking: b, onStatus, statusMeta, showDate }) {
+  const [expanded, setExpanded] = useState(false);
+  const s = statusMeta(b.status);
 
   return (
-    <div style={{
-      background: '#FAFAFA', borderRadius: 14, padding: '16px 18px',
-      border: '1px solid #E2E8F0', display: 'flex',
-      justifyContent: 'space-between', alignItems: 'flex-start',
-      gap: 12, flexWrap: 'wrap',
-    }}>
-      {/* LEFT — Patient Info */}
-      <div style={{ flex: 1, minWidth: 200 }}>
+    <div className="dd-booking-row"
+      style={{ borderBottom:'1px solid #F1F5F9', transition:'background 0.15s' }}>
 
-        {/* Name + Email row */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: '50%',
-            background: 'linear-gradient(135deg, #CCFBF1, #A7F3D0)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontWeight: 800, fontSize: 15, color: '#0F766E', flexShrink: 0,
-          }}>
-            {b.name?.charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <p style={{ margin: 0, fontWeight: 700, fontSize: 15, color: '#1E293B' }}>{b.name}</p>
-            <p style={{ margin: 0, fontSize: 12, color: '#64748B' }}>{b.email}</p>
-          </div>
+      {/* Main clickable row */}
+      <div
+        onClick={() => setExpanded(!expanded)}
+        style={{ display:'flex', alignItems:'center', gap:13,
+          padding:'14px 22px', cursor:'pointer' }}>
+
+        {/* Avatar */}
+        <div style={{ width:42, height:42, borderRadius:12, flexShrink:0,
+          background:'linear-gradient(135deg,#CCFBF1,#A7F3D0)',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          fontWeight:800, fontSize:17, color:'#0F766E' }}>
+          {b.name?.charAt(0)?.toUpperCase()}
         </div>
 
-        {/* Badges row */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-          {showDate && (
-            <span style={{ fontSize: 11, background: '#EFF6FF', color: '#3B82F6', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-              📅 {b.date}
-            </span>
-          )}
-          <span style={{ fontSize: 11, background: '#F0FDFA', color: '#0F766E', padding: '2px 8px', borderRadius: 20, fontWeight: 700 }}>
-            🕐 {b.time}
-          </span>
-          {b.doctorName && (
-            <span style={{ fontSize: 11, background: '#F0FDFA', color: '#0F766E', padding: '2px 8px', borderRadius: 20, fontWeight: 700, border: '1px solid #CCFBF1' }}>
-              👨‍⚕️ {b.doctorName}
-            </span>
-          )}
-          <span style={{ fontSize: 11, background: '#F1F5F9', color: '#64748B', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
-            {b.appointmentType}
-          </span>
-          {b.phone && (
-            <span style={{ fontSize: 11, background: '#FFF7ED', color: '#C2410C', padding: '2px 8px', borderRadius: 20, fontWeight: 600 }}>
-              📱 {b.phone}
-            </span>
-          )}
-          {b.paymentStatus === 'PAID' && (
-            <span style={{ fontSize: 11, background: '#D1FAE5', color: '#065F46', padding: '2px 8px', borderRadius: 20, fontWeight: 700, border: '1px solid #6EE7B7' }}>
-              💳 PAID ₹{b.amountPaid}
-            </span>
-          )}
-        </div>
-
-        {/* Message */}
-        {b.message && (
-          <p style={{ margin: '8px 0 0', fontSize: 12, color: '#64748B', background: '#F8FAFC', padding: '6px 10px', borderRadius: 8, borderLeft: '3px solid #CBD5E1' }}>
-            💬 {b.message}
+        {/* Info */}
+        <div style={{ flex:1, minWidth:0 }}>
+          <p style={{ margin:0, fontWeight:700, fontSize:14, color:'#1E293B',
+            whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
+            {b.name}
           </p>
-        )}
-
-        {/* ── Zoom link — confirmed online ── */}
-        {b.appointmentType === 'Online' && b.meetingLink && b.status === 'confirmed' && (
-          <div style={{
-            marginTop: 10, padding: '10px 14px',
-            background: '#EFF6FF', borderRadius: 10,
-            border: '1.5px solid #93C5FD',
-          }}>
-            <p style={{ margin: '0 0 6px', fontSize: 11, fontWeight: 800, color: '#1E40AF' }}>
-              📹 ZOOM MEETING LINK
-            </p>
-            <a href={b.meetingLink} target="_blank" rel="noopener noreferrer"
-              style={{ fontSize: 12, color: '#2563EB', fontWeight: 600, wordBreak: 'break-all', display: 'block' }}>
-              {b.meetingLink}
-            </a>
-            {b.meetingPassword && (
-              <p style={{ margin: '6px 0 0', fontSize: 11, color: '#92400E', background: '#FEF3C7', padding: '4px 8px', borderRadius: 6 }}>
-                🔐 Password: <strong style={{ fontFamily: 'monospace' }}>{b.meetingPassword}</strong>
-              </p>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:5, marginTop:4 }}>
+            {showDate && (
+              <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20,
+                background:'#EFF6FF', color:'#3B82F6' }}>📅 {b.date}</span>
+            )}
+            <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20,
+              background:'#F0FDFA', color:'#0F766E' }}>🕐 {b.time}</span>
+            <span style={{ fontSize:11, fontWeight:600, padding:'2px 8px', borderRadius:20,
+              background:'#F1F5F9', color:'#64748B' }}>{b.appointmentType}</span>
+            {b.paymentStatus === 'PAID' && (
+              <span style={{ fontSize:11, fontWeight:700, padding:'2px 8px', borderRadius:20,
+                background:'#D1FAE5', color:'#059669' }}>💳 ₹{b.amountPaid}</span>
             )}
           </div>
-        )}
+        </div>
 
-        {/* ── Pending online — no zoom yet ── */}
-        {b.appointmentType === 'Online' && !b.meetingLink && b.status === 'pending' && (
-          <div style={{
-            marginTop: 8, padding: '8px 12px',
-            background: '#FEF3C7', borderRadius: 8,
-            border: '1px solid #FCD34D', fontSize: 11,
-            color: '#92400E', fontWeight: 600,
-          }}>
-            ⚠️ Zoom link will be auto-created when you confirm
-          </div>
-        )}
+        {/* Right */}
+        <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end',
+          gap:6, flexShrink:0 }}>
+          <span style={{ fontSize:11, fontWeight:800, padding:'3px 11px', borderRadius:20,
+            background:s.bg, color:s.color, border:`1px solid ${s.border}`,
+            textTransform:'capitalize', whiteSpace:'nowrap' }}>
+            {b.status || 'pending'}
+          </span>
+          <span style={{ fontSize:17, color:'#94A3B8', transition:'transform 0.25s',
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)', display:'inline-block' }}>
+            ▾
+          </span>
+        </div>
       </div>
 
-      {/* RIGHT — Status + Actions */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+      {/* Expanded */}
+      {expanded && (
+        <div className="dd-expand"
+          style={{ padding:'0 22px 18px', borderTop:'1px solid #F1F5F9' }}>
 
-        {/* Status Badge */}
-        <span style={{
-          fontSize: 11, fontWeight: 800, padding: '4px 12px', borderRadius: 20,
-          background: s.bg, color: s.color, border: `1px solid ${s.border}`,
-          textTransform: 'capitalize',
-        }}>
-          {b.status || 'pending'}
-        </span>
-
-        {/* Pending actions */}
-        {(b.status === 'pending' || !b.status) && (
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => onStatus(b._id, 'confirmed')} style={{
-              background: '#D1FAE5', color: '#059669', border: 'none',
-              padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-            }}>
-              <CheckCircle size={13} />
-              {b.appointmentType === 'Online' ? 'Confirm + Zoom' : 'Confirm'}
-            </button>
-            <button onClick={() => onStatus(b._id, 'cancelled')} style={{
-              background: '#FEE2E2', color: '#EF4444', border: 'none',
-              padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-            }}>
-              <XCircle size={13} /> Cancel
-            </button>
+          {/* Contact row */}
+          <div style={{ display:'flex', flexWrap:'wrap', gap:8, padding:'12px 0 10px' }}>
+            {b.email && (
+              <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12,
+                color:'#64748B', background:'#F8FAFC', padding:'5px 10px',
+                borderRadius:8, border:'1px solid #E2E8F0' }}>
+                <Mail size={12} /> {b.email}
+              </div>
+            )}
+            {b.phone && (
+              <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12,
+                color:'#64748B', background:'#F8FAFC', padding:'5px 10px',
+                borderRadius:8, border:'1px solid #E2E8F0' }}>
+                <Phone size={12} /> {b.phone}
+              </div>
+            )}
+            {b.doctorName && (
+              <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12,
+                color:'#64748B', background:'#F8FAFC', padding:'5px 10px',
+                borderRadius:8, border:'1px solid #E2E8F0' }}>
+                <Stethoscope size={12} /> Dr. {b.doctorName}
+              </div>
+            )}
           </div>
-        )}
 
-        {/* Confirmed → Mark Complete */}
-        {b.status === 'confirmed' && (
-          <button onClick={() => onStatus(b._id, 'completed')} style={{
-            background: '#E0F2FE', color: '#0369A1', border: 'none',
-            padding: '6px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700,
-            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4,
-          }}>
-            <CheckCircle size={13} /> Mark Complete
-          </button>
-        )}
-      </div>
+          {/* Message */}
+          {b.message && (
+            <div style={{ fontSize:12, color:'#64748B', background:'#F8FAFC',
+              borderLeft:'3px solid #CBD5E1', padding:'8px 12px',
+              borderRadius:'0 8px 8px 0', marginBottom:10 }}>
+              💬 {b.message}
+            </div>
+          )}
+
+          {/* Zoom confirmed */}
+          {b.appointmentType === 'Online' && b.meetingLink && b.status === 'confirmed' && (
+            <div style={{ background:'#EFF6FF', border:'1.5px solid #93C5FD',
+              borderRadius:10, padding:'12px 14px', marginBottom:10 }}>
+              <p style={{ margin:'0 0 5px', fontSize:11, fontWeight:800, color:'#1E40AF' }}>
+                📹 Zoom Meeting
+              </p>
+              <a href={b.meetingLink} target="_blank" rel="noopener noreferrer"
+                className="dd-zoom-link"
+                style={{ fontSize:12, color:'#2563EB', fontWeight:600,
+                  wordBreak:'break-all', display:'block' }}>
+                {b.meetingLink}
+              </a>
+              {b.meetingPassword && (
+                <p style={{ margin:'6px 0 0', fontSize:11, color:'#92400E',
+                  background:'#FEF3C7', padding:'4px 8px', borderRadius:6 }}>
+                  🔐 Password: <code style={{ fontFamily:'monospace', fontWeight:800 }}>
+                    {b.meetingPassword}
+                  </code>
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Zoom pending */}
+          {b.appointmentType === 'Online' && !b.meetingLink && b.status === 'pending' && (
+            <div style={{ fontSize:11, fontWeight:600, color:'#92400E',
+              background:'#FEF3C7', border:'1px solid #FCD34D',
+              padding:'7px 11px', borderRadius:8, marginBottom:10 }}>
+              ⚠️ Zoom link will be auto-created on confirmation
+            </div>
+          )}
+
+          {/* Actions */}
+          <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
+            {(b.status === 'pending' || !b.status) && (
+              <>
+                <button className="dd-action-btn"
+                  onClick={() => onStatus(b._id, 'confirmed')}
+                  style={{ display:'flex', alignItems:'center', gap:5,
+                    padding:'7px 14px', borderRadius:9, border:'none',
+                    background:'#D1FAE5', color:'#059669',
+                    fontSize:12, fontWeight:700, cursor:'pointer',
+                    fontFamily:'inherit', transition:'all 0.2s' }}>
+                  <CheckCircle size={13} />
+                  {b.appointmentType === 'Online' ? 'Confirm + Zoom' : 'Confirm'}
+                </button>
+                <button className="dd-action-btn"
+                  onClick={() => onStatus(b._id, 'cancelled')}
+                  style={{ display:'flex', alignItems:'center', gap:5,
+                    padding:'7px 14px', borderRadius:9, border:'none',
+                    background:'#FEE2E2', color:'#EF4444',
+                    fontSize:12, fontWeight:700, cursor:'pointer',
+                    fontFamily:'inherit', transition:'all 0.2s' }}>
+                  <XCircle size={13} /> Cancel
+                </button>
+              </>
+            )}
+            {b.status === 'confirmed' && (
+              <button className="dd-action-btn"
+                onClick={() => onStatus(b._id, 'completed')}
+                style={{ display:'flex', alignItems:'center', gap:5,
+                  padding:'7px 14px', borderRadius:9, border:'none',
+                  background:'#E0F2FE', color:'#0369A1',
+                  fontSize:12, fontWeight:700, cursor:'pointer',
+                  fontFamily:'inherit', transition:'all 0.2s' }}>
+                <CheckCircle size={13} /> Mark Complete
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
