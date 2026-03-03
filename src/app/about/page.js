@@ -1,7 +1,7 @@
-// src/app/about/page.js
+// app/about/page.js
 import { connectDB } from '@/lib/mongodb';
 import AboutImage from '@/models/AboutImage';
-import AboutPageClient from './AboutPageClient.js'; // ← explicit .js extension
+import AboutPageClient from './AboutPageClient.js';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,18 +18,7 @@ async function getAboutImages() {
 
 export default async function AboutPage() {
   const aboutImages = await getAboutImages();
-
-  const whoWeAreImage = aboutImages.find(
-    (img) => img.section === 'who-we-are'
-  );
-  const whyChooseImage = aboutImages.find(
-    (img) => img.section === 'why-choose-us'
-  );
-
-  return (
-    <AboutPageClient
-      whoWeAreImage={whoWeAreImage}
-      whyChooseImage={whyChooseImage}
-    />
-  );
+  const whoWeAreImage  = aboutImages.find((img) => img.section === 'who-we-are');
+  const whyChooseImage = aboutImages.find((img) => img.section === 'why-choose-us');
+  return <AboutPageClient whoWeAreImage={whoWeAreImage} whyChooseImage={whyChooseImage} />;
 }

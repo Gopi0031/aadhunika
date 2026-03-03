@@ -5,105 +5,120 @@ import { useEffect } from 'react';
 
 export default function ScrollAnimations() {
   useEffect(() => {
-    // Scroll Progress Bar
+    // ── Scroll Progress Bar ──
     const progressBar = document.createElement('div');
-    progressBar.className = 'scroll-progress';
+    Object.assign(progressBar.style, {
+      position: 'fixed', top: 0, left: 0, height: '3px', width: '0%',
+      background: 'linear-gradient(90deg, #0F766E, #15f5ba)',
+      zIndex: '9999', transition: 'width 0.1s linear',
+      borderRadius: '0 2px 2px 0',
+      boxShadow: '0 0 8px rgba(15,118,110,0.5)',
+    });
     document.body.appendChild(progressBar);
 
-    // Back to Top Button
+    // ── Back to Top Button ──
     const backToTop = document.createElement('button');
-    backToTop.className = 'back-to-top';
     backToTop.innerHTML = '↑';
     backToTop.setAttribute('aria-label', 'Back to top');
+    Object.assign(backToTop.style, {
+      position: 'fixed', bottom: '30px', right: '24px',
+      width: '48px', height: '48px', borderRadius: '50%',
+      background: 'linear-gradient(135deg, #0F766E, #059669)',
+      color: '#fff', border: 'none', fontSize: '20px',
+      fontWeight: '700', cursor: 'pointer', zIndex: '999',
+      boxShadow: '0 6px 20px rgba(15,118,110,0.4)',
+      opacity: '0', transform: 'translateY(20px)',
+      transition: 'all 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontFamily: "'Segoe UI', sans-serif",
+    });
     document.body.appendChild(backToTop);
 
-    backToTop.addEventListener('click', () => {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    backToTop.addEventListener('click', () =>
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    );
+    backToTop.addEventListener('mouseenter', () => {
+      backToTop.style.transform = 'translateY(-4px)';
+      backToTop.style.boxShadow = '0 12px 30px rgba(15,118,110,0.55)';
+    });
+    backToTop.addEventListener('mouseleave', () => {
+      backToTop.style.transform = 'translateY(0)';
+      backToTop.style.boxShadow = '0 6px 20px rgba(15,118,110,0.4)';
     });
 
-    // Header scroll effect
-    const header = document.querySelector('.header');
-
+    // ── Scroll handler ──
     const handleScroll = () => {
       const scrolled = window.scrollY;
       const total = document.documentElement.scrollHeight - window.innerHeight;
-      const progress = (scrolled / total) * 100;
-      progressBar.style.width = `${progress}%`;
+      progressBar.style.width = `${(scrolled / total) * 100}%`;
 
-      // Back to top visibility
       if (scrolled > 400) {
-        backToTop.classList.add('visible');
+        backToTop.style.opacity = '1';
+        backToTop.style.transform = 'translateY(0)';
+        backToTop.style.pointerEvents = 'auto';
       } else {
-        backToTop.classList.remove('visible');
-      }
-
-      // Header scroll class
-      if (header) {
-        if (scrolled > 60) {
-          header.classList.add('scrolled');
-        } else {
-          header.classList.remove('scrolled');
-        }
+        backToTop.style.opacity = '0';
+        backToTop.style.transform = 'translateY(20px)';
+        backToTop.style.pointerEvents = 'none';
       }
     };
 
-    // Intersection Observer for reveal animations
-    const observer = new IntersectionObserver(
+    // ── Reveal Observer ──
+    const revealObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add('visible');
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translate(0,0) scale(1)';
+            revealObserver.unobserve(entry.target);
           }
         });
       },
       { threshold: 0.12, rootMargin: '0px 0px -50px 0px' }
     );
 
-    const revealElements = document.querySelectorAll(
-      '.reveal, .reveal-left, .reveal-right, .reveal-scale'
-    );
-    revealElements.forEach((el) => observer.observe(el));
+    // Apply initial hidden states per class
+    document.querySelectorAll('.reveal').forEach((el) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(30px)';
+      el.style.transition = 'all 0.7s cubic-bezier(0.25,0.46,0.45,0.94)';
+      revealObserver.observe(el);
+    });
+    document.querySelectorAll('.reveal-left').forEach((el) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-40px)';
+      el.style.transition = 'all 0.8s cubic-bezier(0.25,0.46,0.45,0.94)';
+      revealObserver.observe(el);
+    });
+    document.querySelectorAll('.reveal-right').forEach((el) => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(40px)';
+      el.style.transition = 'all 0.8s cubic-bezier(0.25,0.46,0.45,0.94)';
+      revealObserver.observe(el);
+    });
+    document.querySelectorAll('.reveal-scale').forEach((el) => {
+      el.style.opacity = '0';
+      el.style.transform = 'scale(0.85)';
+      el.style.transition = 'all 0.7s cubic-bezier(0.34,1.56,0.64,1)';
+      revealObserver.observe(el);
+    });
 
-    // Counter animation
-    const counters = document.querySelectorAll('[data-count]');
-    const counterObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const target = parseInt(entry.target.getAttribute('data-count'));
-            const suffix = entry.target.getAttribute('data-suffix') || '';
-            const duration = 2000;
-            const steps = 60;
-            const increment = target / steps;
-            let current = 0;
-
-            const timer = setInterval(() => {
-              current += increment;
-              if (current >= target) {
-                current = target;
-                clearInterval(timer);
-              }
-              entry.target.textContent = Math.floor(current) + suffix;
-            }, duration / steps);
-
-            counterObserver.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-
-    counters.forEach((counter) => counterObserver.observe(counter));
+    // Apply stagger delays
+    document.querySelectorAll('[class*="delay-"]').forEach((el) => {
+      const match = el.className.match(/delay-(\d+)/);
+      if (match) {
+        el.style.transitionDelay = `${parseInt(match[1]) * 0.1}s`;
+      }
+    });
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      observer.disconnect();
-      counterObserver.disconnect();
+      revealObserver.disconnect();
       if (document.body.contains(progressBar)) document.body.removeChild(progressBar);
-      if (document.body.contains(backToTop)) document.body.removeChild(backToTop);
+      if (document.body.contains(backToTop))   document.body.removeChild(backToTop);
     };
   }, []);
 

@@ -233,10 +233,7 @@ function AboutCard({ card, delay, visible }) {
               borderBottom: i < card.list.length - 1
                 ? '1px solid #F1F5F9' : 'none',
             }}>
-              <span style={{
-                position: 'absolute', left: 0,
-                color: card.color, fontWeight: 700,
-              }}>✓</span>
+             
               {item}
             </li>
           ))}
