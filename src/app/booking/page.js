@@ -758,10 +758,6 @@ export default function BookingPage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(135deg, #F0FDF4 0%, #FFFFF0 40%, #F0F9FF 100%)',
-      paddingTop: 'clamp(70px, 8vw, 90px)',
-      paddingBottom: 60,
       fontFamily: "'Segoe UI', sans-serif",
     }}>
       <style>{`
@@ -780,26 +776,85 @@ export default function BookingPage() {
       `}</style>
 
       {/* Hero Header */}
-      <div style={{ textAlign: 'center', padding: '0 20px 24px', animation: 'fadeInDown 0.8s ease both' }}>
-        <div style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          background: 'rgba(15,118,110,0.1)', border: '1px solid rgba(15,118,110,0.2)',
-          color: '#0F766E', padding: '6px 18px', borderRadius: 50, fontSize: 12,
-          fontWeight: 700, letterSpacing: '1.5px', textTransform: 'uppercase', marginBottom: 16,
-        }}>
-          <span style={{ width: 8, height: 8, background: '#059669', borderRadius: '50%', animation: 'pulse 2s infinite' }} />
-          Online &amp; Offline Appointments
-        </div>
-        <h1 style={{ fontSize: 'clamp(28px, 5vw, 48px)', fontWeight: 800, color: '#0F766E', margin: '0 0 12px', lineHeight: 1.2 }}>
-          Book Your Appointment
-        </h1>
-        <p style={{ fontSize: 'clamp(14px, 2vw, 17px)', color: '#374151', maxWidth: 520, margin: '0 auto' }}>
-          Consult our specialists in-person or via video call. Fast, easy, and convenient.
-        </p>
-      </div>
+      {/* ── Hero ── */}
+{/* ── Hero ── */}
+<div
+  style={{
+    background: 'linear-gradient(135deg, #043b3b 0%, #0F766E 60%, #059669 100%)',
+    padding: 'clamp(80px,12vw,20px) 24px clamp(50px,8vw,90px)',
+    textAlign: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+    animation: 'fadeInDown 0.9s ease both',
+  }}
+>
+  {/* Decorative circles */}
+  {[
+    { w: 300, h: 300, top: -100, right: -80,  op: 0.06 },
+    { w: 200, h: 200, bottom: -60, left: -50, op: 0.04 },
+    { w: 150, h: 150, top: 30, left: '20%',   op: 0.05 },
+  ].map((c, i) => (
+    <div key={i} style={{
+      position: 'absolute', width: c.w, height: c.h, borderRadius: '50%',
+      background: `rgba(255,255,255,${c.op})`,
+      top: c.top, bottom: c.bottom, right: c.right, left: c.left,
+      pointerEvents: 'none',
+    }} />
+  ))}
 
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 clamp(12px, 3vw, 40px)' }}>
-        <StepIndicator currentStep={currentStep} />
+  {/* Badge */}
+  <div style={{
+    display: 'inline-flex', alignItems: 'center', gap: 8,
+    background: 'rgba(255,255,255,0.15)', backdropFilter: 'blur(10px)',
+    border: '1px solid rgba(255,255,255,0.25)',
+    color: '#fff', padding: '7px 20px', borderRadius: 50,
+    fontSize: 12, fontWeight: 700, letterSpacing: '1.5px',
+    textTransform: 'uppercase', marginBottom: 20,
+    animation: 'fadeInDown 0.8s ease 0.2s both',
+  }}>
+    <span style={{
+      width: 8, height: 8, background: '#15f5ba', borderRadius: '50%',
+      animation: 'pulse 2s infinite', display: 'inline-block',
+    }} />
+    Online &amp; Offline Appointments
+  </div>
+
+  <h1 style={{
+    fontSize: 'clamp(32px,6vw,60px)', fontWeight: 800,
+    color: '#fff', margin: '0 0 16px', lineHeight: 1.15,
+    animation: 'fadeInDown 0.8s ease 0.3s both',
+  }}>
+    Book Your{' '}
+    <span style={{
+      background: 'linear-gradient(135deg,#00f7ff,#15f5ba)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+    }}>
+      Appointment
+    </span>
+  </h1>
+
+  <p style={{
+    fontSize: 'clamp(15px,2vw,18px)', color: 'rgba(255,255,255,0.85)',
+    maxWidth: 550, margin: '0 auto',
+    animation: 'fadeInDown 0.8s ease 0.4s both',
+  }}>
+    Consult our specialists in-person or via video call. Fast, easy, and convenient.
+  </p>
+
+  {/* Wave divider */}
+  <div style={{ position: 'absolute', bottom: -1, left: 0, right: 0 }}>
+    <svg viewBox="0 0 1440 60" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: 'block' }}>
+      <path d="M0,30 C360,60 1080,0 1440,30 L1440,60 L0,60 Z" fill="#F0FDF4" />
+    </svg>
+  </div>
+</div>
+
+
+
+     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '40px clamp(12px,3vw,40px) 60px' }}>
+   <StepIndicator currentStep={currentStep} />
 
         <div style={{
           display: 'grid',

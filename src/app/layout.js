@@ -27,7 +27,7 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <Header />
-        <main style={{ paddingTop: '80px' }}>{children}</main>
+        <main style={{ paddingTop: '60px' }}>{children}</main>
         <Footer />
 
         <Toaster
@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
               color: '#fff',
               fontWeight: '600',
               borderRadius: '12px',
-              padding: '16px 24px',
+              // padding: '16px 24px',
               fontSize: '15px',
             },
             success: {

@@ -340,7 +340,7 @@ export default function AboutPageClient({ whoWeAreImage, whyChooseImage }) {
         ref={heroRef}
         style={{
           background: 'linear-gradient(135deg, #043b3b 0%, #0F766E 60%, #059669 100%)',
-          padding: 'clamp(90px, 14vw, 160px) 24px clamp(60px, 10vw, 100px)',
+          padding: 'clamp(80px, 14vw, 20px) 24px clamp(60px, 5vw, 100px)',
           textAlign: 'center', position: 'relative', overflow: 'hidden',
           opacity: heroVisible ? 1 : 0,
           transition: 'opacity 1s ease',

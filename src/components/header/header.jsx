@@ -151,10 +151,15 @@ export default function Header() {
                 href={link.href}
                 className="header-nav-link"
                 style={{
-                  color:      isActive  ? '#064e4e' : '#043b3b',
-                  fontWeight: isActive  ? 700 : 600,
-                  background: isHovered ? 'rgba(4,59,59,0.08)' : 'transparent',
-                }}
+  color:          isActive  ? '#064e4e' : '#043b3b',
+  fontWeight:     isActive  ? 700 : 600,
+  background:     isHovered && !isActive ? 'rgba(4,59,59,0.08)' : 'transparent',
+  borderBottom:   isActive  ? '2.5px solid #000000' : '2.5px solid transparent',
+  borderRadius:   0,
+  paddingBottom:  '6px',
+  transition:     'all 0.3s ease',
+}}
+
                 onClick={closeMenu}
                 onMouseEnter={() => setHoveredLink(link.href)}
                 onMouseLeave={() => setHoveredLink(null)}

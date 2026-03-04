@@ -46,26 +46,22 @@ function StatCounter({ number, suffix, label }) {
     }}>
       <div style={{
         fontSize: 'clamp(24px, 3.5vw, 38px)',
-        fontWeight: 800,
-        color: '#fff',
-        lineHeight: 1,
+        fontWeight: 800, color: '#fff', lineHeight: 1,
         fontFamily: "'Segoe UI', sans-serif",
       }}>
         {count}{suffix}
       </div>
       <div style={{
-        fontSize: 12,
-        color: 'rgba(255,255,255,0.75)',
-        fontWeight: 600,
-        marginTop: 6,
-        textTransform: 'uppercase',
-        letterSpacing: '1px',
+        fontSize: 12, color: 'rgba(255,255,255,0.75)',
+        fontWeight: 600, marginTop: 6,
+        textTransform: 'uppercase', letterSpacing: '1px',
       }}>
         {label}
       </div>
     </div>
   );
 }
+
 function HeroContent() {
   return (
     <div style={{
@@ -74,7 +70,6 @@ function HeroContent() {
       padding: '0 clamp(16px, 4vw, 40px)',
       maxWidth: 820, margin: '0 auto',
     }}>
-      {/* Title */}
       <h1 style={{
         fontSize: 'clamp(30px, 6vw, 64px)',
         fontWeight: 800, color: '#fff',
@@ -94,7 +89,6 @@ function HeroContent() {
         Hospital
       </h1>
 
-      {/* Subtitle */}
       <p style={{
         fontSize: 'clamp(16px, 2.5vw, 22px)',
         color: 'rgba(255,255,255,0.92)',
@@ -103,7 +97,6 @@ function HeroContent() {
         Your Trusted Partner in Health &amp; Wellness
       </p>
 
-      {/* Tagline */}
       <p style={{
         fontSize: 'clamp(13px, 1.8vw, 16px)',
         color: 'rgba(255,255,255,0.72)',
@@ -112,9 +105,9 @@ function HeroContent() {
         Advanced medical care with compassion — 24/7 emergency services available
       </p>
 
-      {/* CTA Buttons */}
       <div style={{
-        display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap',
+        display: 'flex', gap: 14,
+        justifyContent: 'center', flexWrap: 'wrap',
       }}>
         <a
           href="/services"
@@ -171,8 +164,14 @@ function HeroContent() {
 export default function HeroSection({ heroData }) {
   const sectionRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
+  const [headerHeight, setHeaderHeight] = useState(80);
 
+  // ✅ Measure actual header height dynamically
   useEffect(() => {
+    const header = document.querySelector('header');
+    if (header) {
+      setHeaderHeight(header.offsetHeight);
+    }
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); }
@@ -183,22 +182,21 @@ export default function HeroSection({ heroData }) {
     return () => observer.disconnect();
   }, []);
 
-  const scrollDown = () => {
-    document.querySelector('.specialists')?.scrollIntoView({ behavior: 'smooth' });
-  };
 
-  const sectionBase = {
-    position: 'relative',
-    width: '100%',
-    minHeight: '100vh',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    fontFamily: "'Segoe UI', sans-serif",
-    opacity: isVisible ? 1 : 0,
-    transition: 'opacity 1s ease',
+ const sectionBase = {
+  position: 'relative',
+  width: '100%',
+  height: `calc(100vh - ${headerHeight}px)`,
+  minHeight: 480,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  overflow: 'hidden',
+  fontFamily: "'Segoe UI', sans-serif",
+  opacity: isVisible ? 1 : 0,
+  transition: 'opacity 1s ease',
+  // NO marginTop here
   };
 
   return (
@@ -208,8 +206,29 @@ export default function HeroSection({ heroData }) {
           0%,100% { transform: scale(1); opacity: 1; }
           50%      { transform: scale(1.35); opacity: 0.65; }
         }
-       
-        .hero-swiper-full { width: 100%; height: 100%; }
+
+        /* ✅ Swiper fills parent fully */
+        .hero-swiper-full {
+          width: 100% !important;
+          height: 100% !important;
+          position: absolute !important;
+          top: 0 !important; left: 0 !important;
+        }
+        .hero-swiper-full .swiper-wrapper {
+          height: 100% !important;
+        }
+        .hero-swiper-full .swiper-slide {
+          height: 100% !important;
+          width: 100% !important;
+        }
+        .hero-swiper-full .swiper-slide img {
+          width: 100% !important;
+          height: 100% !important;
+          object-fit: cover !important;
+          object-position: center center !important;
+          display: block !important;
+        }
+
         .swiper-pagination-bullet {
           background: rgba(255,255,255,0.5) !important;
           width: 10px !important; height: 10px !important;
@@ -219,9 +238,16 @@ export default function HeroSection({ heroData }) {
           width: 28px !important;
           border-radius: 5px !important;
         }
+
+        /* ✅ Mobile: ensure image covers properly */
+        @media (max-width: 768px) {
+          .hero-swiper-full .swiper-slide img {
+            object-position: center top !important;
+          }
+        }
       `}</style>
 
-      {/* ── NO HERO DATA (fallback) ── */}
+      {/* ── NO HERO DATA (fallback gradient) ── */}
       {(!heroData || heroData.length === 0) ? (
         <section
           ref={sectionRef}
@@ -230,7 +256,6 @@ export default function HeroSection({ heroData }) {
             background: 'linear-gradient(135deg, #043b3b 0%, #0F766E 50%, #059669 100%)',
           }}
         >
-          {/* Deco circles */}
           {[
             { w: 500, h: 500, top: -150, right: -100 },
             { w: 300, h: 300, bottom: -80, left: -60 },
@@ -242,67 +267,52 @@ export default function HeroSection({ heroData }) {
               pointerEvents: 'none',
             }} />
           ))}
-
           <HeroContent />
-
-        
-
-        
         </section>
 
       ) : (
-        /* ── WITH HERO DATA ── */
+        /* ── WITH HERO DATA (Swiper) ── */
         <section ref={sectionRef} style={sectionBase}>
-          {/* Swiper Background */}
-          <div style={{
-            position: 'absolute', inset: 0, zIndex: 0,
-          }}>
-            <Swiper
-              modules={[Autoplay, EffectFade, Pagination]}
-              autoplay={{ delay: 4500, disableOnInteraction: false }}
-              effect="fade"
-              fadeEffect={{ crossFade: true }}
-              loop
-              speed={1000}
-              pagination={{
-                clickable: true,
-                dynamicBullets: true,
-                renderBullet: (index, className) =>
-                  `<span class="${className} hero-pagination-bullet"></span>`,
-              }}
-              className="hero-swiper-full"
-            >
-              {heroData.map((img) => (
-                <SwiperSlide key={img._id}>
-                  <img
-                    src={img.image}
-                    alt="Aadhunika Hospital"
-                    loading="eager"
-                    draggable={false}
-                    style={{
-                      width: '100%', height: '100%',
-                      objectFit: 'cover', display: 'block',
-                    }}
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-          </div>
 
-          {/* Dark Overlay */}
+          {/* ✅ Swiper fills the entire section */}
+          <Swiper
+            modules={[Autoplay, EffectFade, Pagination]}
+            autoplay={{ delay: 4500, disableOnInteraction: false }}
+            effect="fade"
+            fadeEffect={{ crossFade: true }}
+            loop
+            speed={1000}
+            pagination={{ clickable: true, dynamicBullets: true }}
+            className="hero-swiper-full"
+          >
+            {heroData.map((img) => (
+              <SwiperSlide key={img._id}>
+                <img
+                  src={img.image}
+                  alt="Aadhunika Hospital"
+                  loading="eager"
+                  draggable={false}
+                />
+              </SwiperSlide>
+            ))}
+          </Swiper>
+
+          {/* Dark overlay */}
           <div style={{
             position: 'absolute', inset: 0, zIndex: 1,
             background: 'linear-gradient(135deg, rgba(4,59,59,0.78) 0%, rgba(15,118,110,0.6) 100%)',
+            pointerEvents: 'none',
           }} />
 
-          {/* Content */}
-          <div style={{ position: 'relative', zIndex: 3, width: '100%',
+          {/* Content on top */}
+          <div style={{
+            position: 'relative', zIndex: 3,
+            width: '100%',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            paddingBottom: 100,
           }}>
             <HeroContent />
           </div>
-        
+
         </section>
       )}
     </>

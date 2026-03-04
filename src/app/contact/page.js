@@ -236,7 +236,7 @@ export default function ContactPage() {
           className="contact-hero"
           style={{
             background: 'linear-gradient(135deg, #043b3b 0%, #0F766E 60%, #059669 100%)',
-            padding: 'clamp(80px, 12vw, 140px) 24px clamp(50px, 8vw, 90px)',
+            padding: 'clamp(80px, 12vw, 10px) 24px clamp(50px, 8vw, 90px)',
             textAlign: 'center',
             position: 'relative',
             overflow: 'hidden',
