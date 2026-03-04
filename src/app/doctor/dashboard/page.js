@@ -7,7 +7,7 @@ import {
   Calendar, User, Phone, Mail, LogOut,
   Stethoscope, CheckCircle, XCircle,
   TrendingUp, CalendarDays, Menu, X, Pencil, Check,
-  Clock, Activity, ChevronRight, Bell,
+  Clock, Activity, ChevronRight, Bell, RefreshCw
 } from 'lucide-react';
 
 /* ── Spinner keyframe injected once ── */
@@ -42,6 +42,9 @@ export default function DoctorDashboard() {
     new Date().toISOString().split('T')[0]
   );
 
+  // 🔥 RESCHEDULE STATE
+  const [rescheduleData, setRescheduleData] = useState(null);
+
   useEffect(() => {
     const id = new URLSearchParams(window.location.search).get('id');
     if (!id) { router.push('/login'); return; }
@@ -69,11 +72,11 @@ export default function DoctorDashboard() {
     router.push('/login');
   };
 
-  const handleUpdateStatus = async (bookingId, status) => {
+  const handleUpdateStatus = async (bookingId, status, extraData = {}) => {
     try {
       const res = await fetch('/api/booking', {
         method: 'PUT', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: bookingId, status }),
+        body: JSON.stringify({ id: bookingId, status, ...extraData }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -82,14 +85,52 @@ export default function DoctorDashboard() {
               meetingLink:     data.meetingLink     || b.meetingLink,
               meetingId:       data.meetingId       || b.meetingId,
               meetingPassword: data.meetingPassword || b.meetingPassword,
+              date:            data.newDate         || b.date,
+              time:            data.newTime         || b.time,
             } : b
         ));
         toast.success(
-          status === 'confirmed' && data.meetingLink
-            ? '✅ Confirmed! Zoom link sent.' : `Booking ${status}`
+          status === 'rescheduled' ? '✅ Appointment Rescheduled!' :
+          status === 'confirmed' && data.meetingLink ? '✅ Confirmed! Zoom link sent.' : 
+          `Booking ${status}`
         );
+        setRescheduleData(null); // Close modal
+      } else {
+        toast.error('Failed to update status');
       }
     } catch { toast.error('Failed to update status'); }
+  };
+
+  // 🔥 RESCHEDULE LOGIC
+  const openRescheduleModal = (booking) => {
+    setRescheduleData({ booking, date: '', time: '', reason: '', slots: [], loadingSlots: false });
+  };
+
+  const fetchAvailableSlots = async (dateStr, dept) => {
+    setRescheduleData(prev => ({ ...prev, date: dateStr, time: '', loadingSlots: true }));
+    try {
+      const res = await fetch(`/api/slots?date=${dateStr}&department=${encodeURIComponent(dept)}`);
+      const data = await res.json();
+      if (data.slots) {
+        const available = data.slots.filter(s => s.status !== 'closed' && s.status !== 'booked');
+        setRescheduleData(prev => ({ ...prev, slots: available }));
+      } else {
+        setRescheduleData(prev => ({ ...prev, slots: [] }));
+      }
+    } catch {
+      toast.error('Failed to fetch slots');
+    } finally {
+      setRescheduleData(prev => ({ ...prev, loadingSlots: false }));
+    }
+  };
+
+  const submitReschedule = () => {
+    if (!rescheduleData.date || !rescheduleData.time) return toast.error('Select new date and time');
+    handleUpdateStatus(rescheduleData.booking._id, 'rescheduled', {
+      newDate: rescheduleData.date,
+      newTime: rescheduleData.time,
+      cancelReason: rescheduleData.reason
+    });
   };
 
   const handleSaveProfile = async () => {
@@ -123,10 +164,11 @@ export default function DoctorDashboard() {
     : new Date().getHours() < 17 ? 'Afternoon' : 'Evening';
 
   const statusMeta = (s) => ({
-    pending:   { bg: '#FEF3C7', color: '#D97706', border: '#FDE68A' },
-    confirmed: { bg: '#D1FAE5', color: '#059669', border: '#A7F3D0' },
-    cancelled: { bg: '#FEE2E2', color: '#EF4444', border: '#FECACA' },
-    completed: { bg: '#E0F2FE', color: '#0369A1', border: '#BAE6FD' },
+    pending:     { bg: '#FEF3C7', color: '#D97706', border: '#FDE68A' },
+    confirmed:   { bg: '#D1FAE5', color: '#059669', border: '#A7F3D0' },
+    rescheduled: { bg: '#FEF3C7', color: '#D97706', border: '#FCD34D' }, // Added Rescheduled color
+    cancelled:   { bg: '#FEE2E2', color: '#EF4444', border: '#FECACA' },
+    completed:   { bg: '#E0F2FE', color: '#0369A1', border: '#BAE6FD' },
   }[s] || { bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0' });
 
   const menuItems = [
@@ -140,11 +182,8 @@ export default function DoctorDashboard() {
 
   /* ── Shared inline style objects ── */
   const S = {
-    /* layout */
     root:   { display:'flex', minHeight:'100vh', fontFamily:"'Segoe UI',sans-serif", background:'#F1F5F9', color:'#0F172A' },
     overlay:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:40 },
-
-    /* sidebar */
     sidebar: (open) => ({
       width: 260, background:'linear-gradient(180deg,#0F766E 0%,#065F46 100%)',
       display:'flex', flexDirection:'column', flexShrink:0,
@@ -179,8 +218,6 @@ export default function DoctorDashboard() {
       color:'#FCA5A5', fontWeight:700, fontSize:14,
       cursor:'pointer', fontFamily:'inherit', marginTop:8,
     },
-
-    /* topbar */
     topbar: {
       background:'#fff', borderBottom:'1px solid #E2E8F0',
       padding:'0 20px', height:64,
@@ -204,8 +241,6 @@ export default function DoctorDashboard() {
       fontSize:12, fontWeight:800,
       display:'flex', alignItems:'center', justifyContent:'center',
     },
-
-    /* cards */
     card: {
       background:'#fff', borderRadius:18, border:'1px solid #E2E8F0',
       boxShadow:'0 2px 10px rgba(0,0,0,0.04)', overflow:'hidden',
@@ -222,16 +257,12 @@ export default function DoctorDashboard() {
       background:'#F0FDFA', color:'#0F766E', border:'1px solid #CCFBF1',
       borderRadius:20, padding:'2px 12px', fontSize:12, fontWeight:800,
     },
-
-    /* stat */
     statCard: {
       background:'#fff', borderRadius:16, padding:'20px 18px',
       border:'1px solid #E2E8F0', boxShadow:'0 2px 8px rgba(0,0,0,0.04)',
       position:'relative', overflow:'hidden', cursor:'default',
       transition:'transform 0.2s ease, box-shadow 0.2s ease',
     },
-
-    /* form */
     input: {
       padding:'10px 14px', borderRadius:10,
       border:'1.5px solid #CBD5E1', fontSize:14,
@@ -257,6 +288,50 @@ export default function DoctorDashboard() {
   return (
     <div style={S.root}>
       <SpinnerStyle />
+
+      {/* ── RESCHEDULE MODAL ── */}
+      {rescheduleData && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="dd-fade" style={{ background: '#fff', borderRadius: 20, width: '100%', maxWidth: 450, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ background: 'linear-gradient(135deg, #D97706, #B45309)', padding: '20px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800 }}>🔄 Reschedule Appointment</h3>
+              <button onClick={() => setRescheduleData(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <p style={{ margin: '0 0 16px', fontSize: 14, color: '#475569' }}>
+                Rescheduling <strong>{rescheduleData.booking.name}</strong> ({rescheduleData.booking.department}).
+              </p>
+
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#64748B', marginBottom: 6 }}>New Date *</label>
+              <input type="date" min={new Date().toISOString().split('T')[0]} value={rescheduleData.date} onChange={e => fetchAvailableSlots(e.target.value, rescheduleData.booking.department)} style={{ ...S.input, marginBottom: 16 }} />
+
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#64748B', marginBottom: 6 }}>New Time Slot *</label>
+              {rescheduleData.loadingSlots ? (
+                <div style={{ padding: 10, color: '#64748B', fontSize: 13, background: '#F1F5F9', borderRadius: 8, marginBottom: 16 }}>Loading slots...</div>
+              ) : rescheduleData.date ? (
+                rescheduleData.slots.length > 0 ? (
+                  <select value={rescheduleData.time} onChange={e => setRescheduleData(prev => ({ ...prev, time: e.target.value }))} style={{ ...S.input, marginBottom: 16 }}>
+                    <option value="">-- Select Time --</option>
+                    {rescheduleData.slots.map(s => <option key={s.time} value={s.time}>{s.time}</option>)}
+                  </select>
+                ) : (
+                  <div style={{ padding: 10, color: '#DC2626', fontSize: 13, background: '#FEF2F2', borderRadius: 8, marginBottom: 16 }}>No slots available on this date.</div>
+                )
+              ) : (
+                <div style={{ padding: 10, color: '#64748B', fontSize: 13, background: '#F1F5F9', borderRadius: 8, marginBottom: 16 }}>Select a date first</div>
+              )}
+
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: '#64748B', marginBottom: 6 }}>Reason for Rescheduling (Sent to Patient)</label>
+              <textarea rows={2} value={rescheduleData.reason} onChange={e => setRescheduleData(prev => ({ ...prev, reason: e.target.value }))} placeholder="e.g. Doctor in surgery..." style={{ ...S.input, resize: 'none', marginBottom: 20 }} />
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button style={{ ...S.btnGhost, flex: 1 }} onClick={() => setRescheduleData(null)}>Cancel</button>
+                <button style={{ ...S.btnPrimary, flex: 1, background: 'linear-gradient(135deg, #D97706, #B45309)' }} onClick={submitReschedule}>Confirm Reschedule</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Overlay */}
       {sidebarOpen && <div style={S.overlay} onClick={() => setSidebarOpen(false)} />}
@@ -324,7 +399,7 @@ export default function DoctorDashboard() {
       <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
 
         {/* Topbar */}
-        <header style={S.topbar}>
+        <header className="doctor-topbar" style={S.topbar}>
           <div style={{ display:'flex', alignItems:'center', gap:14, minWidth:0 }}>
             <button style={S.iconBtn} onClick={() => setSidebarOpen(true)}>
               <Menu size={22} />
@@ -439,8 +514,7 @@ export default function DoctorDashboard() {
                     {todayBookings.length === 0
                       ? <EmptyState icon="🎉" msg="No appointments today — enjoy your day!" />
                       : todayBookings.map(b => (
-                          <BookingCard key={b._id} booking={b}
-                            onStatus={handleUpdateStatus} statusMeta={statusMeta} />
+                          <BookingCard key={b._id} booking={b} onStatus={handleUpdateStatus} onReschedule={openRescheduleModal} statusMeta={statusMeta} />
                         ))}
                   </div>
                 </div>
@@ -477,8 +551,7 @@ export default function DoctorDashboard() {
                       : [...dateBookings]
                           .sort((a, b) => (a.time || '').localeCompare(b.time || ''))
                           .map(b => (
-                            <BookingCard key={b._id} booking={b}
-                              onStatus={handleUpdateStatus} statusMeta={statusMeta} />
+                            <BookingCard key={b._id} booking={b} onStatus={handleUpdateStatus} onReschedule={openRescheduleModal} statusMeta={statusMeta} />
                           ))}
                   </div>
                 </div>
@@ -495,7 +568,7 @@ export default function DoctorDashboard() {
                   {/* Filter pills */}
                   <div style={{ display:'flex', gap:7, flexWrap:'wrap',
                     padding:'14px 22px', borderBottom:'1px solid #E2E8F0' }}>
-                    {['all','pending','confirmed','cancelled','completed'].map(s => {
+                    {['all','pending','confirmed','rescheduled','cancelled','completed'].map(s => {
                       const count = s === 'all' ? bookings.length
                         : bookings.filter(b => b.status === s).length;
                       const active = filterStatus === s;
@@ -530,8 +603,7 @@ export default function DoctorDashboard() {
                     : [...filteredBookings]
                         .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
                         .map(b => (
-                          <BookingCard key={b._id} booking={b}
-                            onStatus={handleUpdateStatus} statusMeta={statusMeta} showDate />
+                          <BookingCard key={b._id} booking={b} onStatus={handleUpdateStatus} onReschedule={openRescheduleModal} statusMeta={statusMeta} showDate />
                         ))}
                 </div>
               )}
@@ -669,7 +741,7 @@ function EmptyState({ icon, msg }) {
 }
 
 /* ── Booking Card ── */
-function BookingCard({ booking: b, onStatus, statusMeta, showDate }) {
+function BookingCard({ booking: b, onStatus, onReschedule, statusMeta, showDate }) {
   const [expanded, setExpanded] = useState(false);
   const s = statusMeta(b.status);
 
@@ -768,7 +840,7 @@ function BookingCard({ booking: b, onStatus, statusMeta, showDate }) {
           )}
 
           {/* Zoom confirmed */}
-          {b.appointmentType === 'Online' && b.meetingLink && b.status === 'confirmed' && (
+          {b.appointmentType === 'Online' && b.meetingLink && (b.status === 'confirmed' || b.status === 'rescheduled') && (
             <div style={{ background:'#EFF6FF', border:'1.5px solid #93C5FD',
               borderRadius:10, padding:'12px 14px', marginBottom:10 }}>
               <p style={{ margin:'0 0 5px', fontSize:11, fontWeight:800, color:'#1E40AF' }}>
@@ -802,7 +874,7 @@ function BookingCard({ booking: b, onStatus, statusMeta, showDate }) {
 
           {/* Actions */}
           <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
-            {(b.status === 'pending' || !b.status) && (
+            {(b.status === 'pending' || b.status === 'rescheduled') && (
               <>
                 <button className="dd-action-btn"
                   onClick={() => onStatus(b._id, 'confirmed')}
@@ -812,7 +884,33 @@ function BookingCard({ booking: b, onStatus, statusMeta, showDate }) {
                     fontSize:12, fontWeight:700, cursor:'pointer',
                     fontFamily:'inherit', transition:'all 0.2s' }}>
                   <CheckCircle size={13} />
-                  {b.appointmentType === 'Online' ? 'Confirm + Zoom' : 'Confirm'}
+                  {b.appointmentType === 'Online' && !b.meetingLink ? 'Confirm + Zoom' : 'Confirm'}
+                </button>
+              </>
+            )}
+            
+            {b.status === 'confirmed' && (
+              <button className="dd-action-btn"
+                onClick={() => onStatus(b._id, 'completed')}
+                style={{ display:'flex', alignItems:'center', gap:5,
+                  padding:'7px 14px', borderRadius:9, border:'none',
+                  background:'#E0F2FE', color:'#0369A1',
+                  fontSize:12, fontWeight:700, cursor:'pointer',
+                  fontFamily:'inherit', transition:'all 0.2s' }}>
+                <CheckCircle size={13} /> Mark Complete
+              </button>
+            )}
+
+            {(b.status !== 'cancelled' && b.status !== 'completed') && (
+              <>
+                <button className="dd-action-btn"
+                  onClick={() => onReschedule(b)}
+                  style={{ display:'flex', alignItems:'center', gap:5,
+                    padding:'7px 14px', borderRadius:9, border:'none',
+                    background:'#FEF3C7', color:'#D97706',
+                    fontSize:12, fontWeight:700, cursor:'pointer',
+                    fontFamily:'inherit', transition:'all 0.2s' }}>
+                  <RefreshCw size={13} /> Reschedule
                 </button>
                 <button className="dd-action-btn"
                   onClick={() => onStatus(b._id, 'cancelled')}
@@ -824,17 +922,6 @@ function BookingCard({ booking: b, onStatus, statusMeta, showDate }) {
                   <XCircle size={13} /> Cancel
                 </button>
               </>
-            )}
-            {b.status === 'confirmed' && (
-              <button className="dd-action-btn"
-                onClick={() => onStatus(b._id, 'completed')}
-                style={{ display:'flex', alignItems:'center', gap:5,
-                  padding:'7px 14px', borderRadius:9, border:'none',
-                  background:'#E0F2FE', color:'#0369A1',
-                  fontSize:12, fontWeight:700, cursor:'pointer',
-                  fontFamily:'inherit', transition:'all 0.2s' }}>
-                <CheckCircle size={13} /> Mark Complete
-              </button>
             )}
           </div>
         </div>

@@ -892,7 +892,7 @@ export default function BookingPage() {
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                   {[
-                    { value: 'Offline', label: 'Hospital Visit',      icon: '🏥',    sub: formData.department ? `₹${deptFee}` : 'Select dept' },
+                    { value: 'Offline', label: 'Hospital Visit',      icon: '🏥',    sub: formData.department ? `₹${deptFee}` : 'SKIP THE QUEUE LINE' },
                     { value: 'Online',  label: 'Online Consultation', icon: '👨‍⚕️', sub: formData.department ? `₹${deptFee}` : 'Select dept' },
                   ].map((type) => {
                     const active = formData.appointmentType === type.value;

@@ -268,8 +268,7 @@ export default function HeroManager() {
               </div>
             ))}
           </div>
-        )}
-        
+        )}        
       </div>
     </div>
   );

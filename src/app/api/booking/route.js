@@ -7,9 +7,7 @@ import { createZoomMeeting } from '@/lib/zoomMeet';
 const uri = process.env.MONGODB_URI;
 const dbName = 'hospital';
 
-// ═══════════════════════════════════════
 // 🔥 ADMIN EMAIL — Set in .env.local
-// ═══════════════════════════════════════
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
 
 async function getCollection(collectionName = 'bookings') {
@@ -28,7 +26,7 @@ function getTransporter() {
 }
 
 // =============================================
-// 🔥 ADMIN NOTIFICATION EMAIL (New Booking)
+// ADMIN NOTIFICATION EMAIL (New Booking)
 // =============================================
 function getAdminNotificationHTML(booking) {
   const isOnline = booking.appointmentType === 'Online';
@@ -36,7 +34,6 @@ function getAdminNotificationHTML(booking) {
 
   return `
     <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:650px;margin:auto;border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
-      
       <div style="background:linear-gradient(135deg,#1E40AF,#3B82F6);padding:30px;text-align:center;">
         <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:800;">🔔 New Appointment Request</h1>
         <p style="color:#BFDBFE;margin:8px 0 0;font-size:13px;">Aadhunika Hospital — Admin Dashboard</p>
@@ -45,26 +42,16 @@ function getAdminNotificationHTML(booking) {
       <div style="text-align:center;padding:20px 30px 10px;">
         <div style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;">
           ${isOnline ? `
-            <span style="background:#DBEAFE;color:#1E40AF;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #93C5FD;">
-              📹 ONLINE CONSULTATION
-            </span>
+            <span style="background:#DBEAFE;color:#1E40AF;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #93C5FD;">📹 ONLINE CONSULTATION</span>
           ` : `
-            <span style="background:#F0FDF4;color:#166534;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #86EFAC;">
-              🏥 IN-PERSON VISIT
-            </span>
+            <span style="background:#F0FDF4;color:#166534;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #86EFAC;">🏥 IN-PERSON VISIT</span>
           `}
           ${isPaid ? `
-            <span style="background:#D1FAE5;color:#065F46;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #6EE7B7;">
-              💳 PAID ₹${booking.amountPaid}
-            </span>
+            <span style="background:#D1FAE5;color:#065F46;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #6EE7B7;">💳 PAID ₹${booking.amountPaid}</span>
           ` : `
-            <span style="background:#FEF3C7;color:#92400E;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #FCD34D;">
-              ⏳ UNPAID
-            </span>
+            <span style="background:#FEF3C7;color:#92400E;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #FCD34D;">⏳ UNPAID</span>
           `}
-          <span style="background:#FEF3C7;color:#92400E;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #FCD34D;">
-            🕐 PENDING CONFIRMATION
-          </span>
+          <span style="background:#FEF3C7;color:#92400E;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:700;border:1px solid #FCD34D;">🕐 PENDING CONFIRMATION</span>
         </div>
       </div>
 
@@ -134,16 +121,12 @@ function getAdminNotificationHTML(booking) {
         <p style="margin:0;font-size:13px;color:#9A3412;font-weight:700;">
           📎 Medical Report Attached: <strong>${booking.file.name || 'File uploaded'}</strong>
         </p>
-        <p style="margin:4px 0 0;font-size:11px;color:#C2410C;">
-          View in admin dashboard → Bookings section
-        </p>
+        <p style="margin:4px 0 0;font-size:11px;color:#C2410C;">View in admin dashboard → Bookings section</p>
       </div>
       ` : ''}
 
       <div style="margin:0 30px 20px;text-align:center;">
-        <p style="margin:0 0 10px;font-size:13px;color:#6B7280;font-weight:600;">
-          ⚡ Action Required: Review and confirm this appointment
-        </p>
+        <p style="margin:0 0 10px;font-size:13px;color:#6B7280;font-weight:600;">⚡ Action Required: Review and confirm this appointment</p>
         <a href="${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/admin/dashboard" 
            target="_blank" 
            style="display:inline-block;background:linear-gradient(135deg,#059669,#047857);color:#ffffff;text-decoration:none;padding:14px 40px;border-radius:12px;font-weight:700;font-size:16px;box-shadow:0 4px 15px rgba(5,150,105,0.4);">
@@ -152,22 +135,21 @@ function getAdminNotificationHTML(booking) {
       </div>
 
       <div style="background:#F9FAFB;padding:20px;text-align:center;border-top:1px solid #E5E7EB;">
-        <p style="color:#9CA3AF;font-size:11px;margin:0;">
-          Auto-generated notification | ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}
-        </p>
+        <p style="color:#9CA3AF;font-size:11px;margin:0;">Auto-generated notification | ${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</p>
       </div>
     </div>
   `;
 }
 
 // =============================================
-// 🔥 ADMIN STATUS UPDATE EMAIL
+// ADMIN STATUS UPDATE EMAIL
 // =============================================
 function getAdminStatusUpdateHTML(booking, newStatus, meetingLink) {
   const statusEmoji = {
     confirmed: '✅',
     cancelled: '❌',
     completed: '🎉',
+    rescheduled: '🔄',
   };
 
   return `
@@ -209,24 +191,28 @@ function getAdminStatusUpdateHTML(booking, newStatus, meetingLink) {
 }
 
 // =============================================
-// PATIENT CONFIRMATION EMAIL WITH ZOOM + RECEIPT
+// PATIENT CONFIRMATION EMAIL WITH ZOOM + RECEIPT + RESCHEDULE
 // =============================================
 function getStatusEmailHTML(booking, newStatus, nextSlot = null, meetingLink = null) {
   const statusConfig = {
     confirmed: {
-      color: '#059669',
-      bgColor: '#D1FAE5',
-      icon: '✅',
+      color: '#059669', bgColor: '#D1FAE5', icon: '✅',
       title: meetingLink ? 'Online Consultation Confirmed!' : 'Appointment Confirmed!',
       message: meetingLink
         ? 'Your Zoom meeting link is ready below. Join at your scheduled time.'
         : 'Please visit the hospital at your scheduled time.',
       badge: meetingLink ? '📹 ZOOM MEETING READY' : 'CONFIRMED',
     },
+    rescheduled: {
+      color: '#D97706', bgColor: '#FEF3C7', icon: '🔄',
+      title: 'Appointment Rescheduled',
+      message: meetingLink
+        ? 'Your appointment has been rescheduled. Here is your new Zoom link and time.'
+        : 'Your appointment has been rescheduled. Please see your new time below.',
+      badge: 'RESCHEDULED',
+    },
     cancelled: {
-      color: '#DC2626',
-      bgColor: '#FEE2E2',
-      icon: '❌',
+      color: '#DC2626', bgColor: '#FEE2E2', icon: '❌',
       title: 'Appointment Cancelled',
       message: nextSlot
         ? 'Your appointment was postponed. See next available slot below.'
@@ -234,9 +220,7 @@ function getStatusEmailHTML(booking, newStatus, nextSlot = null, meetingLink = n
       badge: nextSlot ? 'POSTPONED' : 'CANCELLED',
     },
     completed: {
-      color: '#2563EB',
-      bgColor: '#DBEAFE',
-      icon: '🎉',
+      color: '#2563EB', bgColor: '#DBEAFE', icon: '🎉',
       title: 'Appointment Completed',
       message: 'Thank you for choosing Aadhunika Hospital!',
       badge: 'COMPLETED',
@@ -247,7 +231,7 @@ function getStatusEmailHTML(booking, newStatus, nextSlot = null, meetingLink = n
   if (!config) return null;
 
   let zoomLinkHTML = '';
-  if (newStatus === 'confirmed' && meetingLink) {
+  if ((newStatus === 'confirmed' || newStatus === 'rescheduled') && meetingLink) {
     const meetingPassword = booking.meetingPassword || '';
 
     zoomLinkHTML = `
@@ -258,7 +242,7 @@ function getStatusEmailHTML(booking, newStatus, nextSlot = null, meetingLink = n
           </span>
         </div>
         
-        <h3 style="margin:0 0 12px;color:#1E40AF;font-size:24px;font-weight:900;">Your Zoom Meeting is Ready!</h3>
+        <h3 style="margin:0 0 12px;color:#1E40AF;font-size:24px;font-weight:900;">Your Zoom Meeting Details</h3>
         <p style="margin:0 0 25px;color:#3B82F6;font-size:14px;font-weight:600;">Click below to join your consultation</p>
         
         <a href="${meetingLink}" target="_blank" style="display:inline-block;background:linear-gradient(135deg,#2563EB,#1D4ED8);color:#ffffff;text-decoration:none;padding:20px 60px;border-radius:14px;font-weight:900;font-size:22px;box-shadow:0 8px 25px rgba(37,99,235,0.5);margin:10px 0;text-transform:uppercase;letter-spacing:1px;">
@@ -300,11 +284,10 @@ function getStatusEmailHTML(booking, newStatus, nextSlot = null, meetingLink = n
   }
 
   let paymentReceiptHTML = '';
-  if (booking.paymentId && booking.amountPaid > 0) {
+  // Only show receipt for confirmed/completed/rescheduled, not cancelled unless you process refund elsewhere
+  if (booking.paymentId && booking.amountPaid > 0 && newStatus !== 'cancelled') {
     const receiptDate = new Date(booking.createdAt || new Date()).toLocaleString('en-IN', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'Asia/Kolkata',
+      dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata',
     });
 
     paymentReceiptHTML = `
@@ -319,16 +302,12 @@ function getStatusEmailHTML(booking, newStatus, nextSlot = null, meetingLink = n
               <td style="padding:12px 0;color:#065F46;font-size:13px;text-align:right;font-family:monospace;font-weight:700;">${booking.paymentId}</td>
             </tr>
             <tr style="border-bottom:1px solid #E5E7EB;">
-              <td style="padding:12px 0;color:#6B7280;font-size:13px;font-weight:600;">Order ID</td>
-              <td style="padding:12px 0;color:#374151;font-size:13px;text-align:right;font-family:monospace;">${booking.orderId || 'N/A'}</td>
-            </tr>
-            <tr style="border-bottom:1px solid #E5E7EB;">
               <td style="padding:12px 0;color:#6B7280;font-size:13px;font-weight:600;">Date</td>
               <td style="padding:12px 0;color:#374151;font-size:13px;text-align:right;">${receiptDate}</td>
             </tr>
             <tr style="border-bottom:1px solid #E5E7EB;">
               <td style="padding:12px 0;color:#6B7280;font-size:13px;font-weight:600;">Service</td>
-              <td style="padding:12px 0;color:#374151;font-size:13px;text-align:right;">${booking.department} - Online</td>
+              <td style="padding:12px 0;color:#374151;font-size:13px;text-align:right;">${booking.department}</td>
             </tr>
           </table>
           <div style="background:linear-gradient(135deg,#ECFDF5,#D1FAE5);border-radius:12px;padding:20px;text-align:center;border:2px solid #10B981;">
@@ -373,6 +352,7 @@ function getStatusEmailHTML(booking, newStatus, nextSlot = null, meetingLink = n
       <div style="text-align:center;padding:10px 30px 5px;">
         <h2 style="color:#0F172A;margin:0;font-size:24px;font-weight:800;">${config.title}</h2>
         <p style="color:#374151;font-size:14px;margin:10px 0 0;line-height:1.6;">${config.message}</p>
+        ${booking.cancelReason ? `<p style="color:#DC2626;font-size:14px;margin:10px 0 0;"><strong>Note:</strong> ${booking.cancelReason}</p>` : ''}
       </div>
 
       ${zoomLinkHTML}
@@ -442,7 +422,7 @@ function getBookingConfirmationEmailHTML(booking) {
         <p style="color:#374151;font-size:14px;margin:10px 0 0;">
           ${booking.appointmentType === 'Online'
             ? '📹 Zoom meeting link will be sent once admin confirms your appointment'
-            : 'Please visit the hospital at your scheduled time after confirmation'}
+            : 'Please wait for confirmation before visiting the hospital.'}
         </p>
       </div>
       ${paymentHTML}
@@ -472,7 +452,7 @@ export async function POST(req) {
 
     const {
       name, email, phone, appointmentType, department,
-        doctorId, doctorName,    // ← ADD these two
+      doctorId, doctorName,
       date, time, message, fileBase64, fileName, fileType,
       paymentId, orderId, paymentStatus, amountPaid,
     } = body;
@@ -484,7 +464,6 @@ export async function POST(req) {
       );
     }
 
-    // Check duplicate slot
     const existing = await collection.findOne({
       department, date, time,
       status: { $ne: 'cancelled' },
@@ -497,9 +476,7 @@ export async function POST(req) {
       );
     }
 
-    // ═══════════════════════════════════════
-    // 🔥 AUTO-GENERATE ZOOM IF PAID + ONLINE
-    // ═══════════════════════════════════════
+    // AUTO-GENERATE ZOOM IF PAID + ONLINE
     let meetingLink = '';
     let meetingId = '';
     let meetingPassword = '';
@@ -509,47 +486,32 @@ export async function POST(req) {
       try {
         console.log('📹 Auto-generating Zoom for paid online booking...');
         const zoomData = await createZoomMeeting({
-          name,
-          email,
-          department,
-          date,
-          time,
+          name, email, department, date, time,
         });
-
         meetingLink = zoomData.meetLink;
         meetingId = zoomData.meetingId;
         meetingPassword = zoomData.meetingPassword;
         hostLink = zoomData.hostLink || '';
-
         console.log('✅ Zoom auto-created:', meetingId);
       } catch (zoomError) {
         console.error('⚠️ Zoom auto-creation failed:', zoomError.message);
-        // Don't fail the booking — admin can retry on confirm
       }
     }
 
-    // Build booking document
     const newBooking = {
-      name,
-      email,
-      phone,
+      name, email, phone,
       appointmentType: appointmentType || 'Offline',
       department,
-       doctorId: body.doctorId || null,       // ← ADD
-  doctorName: body.doctorName || '',     // ← ADD
-      date,
-      time,
-      message: message || '',
+      doctorId: doctorId || null,
+      doctorName: doctorName || '',
+      date, time, message: message || '',
       file: fileBase64 ? { data: fileBase64, name: fileName, type: fileType } : null,
       paymentId: paymentId || null,
       orderId: orderId || null,
       paymentStatus: paymentStatus || 'UNPAID',
       amountPaid: amountPaid || 0,
       status: 'pending',
-      meetingLink,
-      meetingId,
-      meetingPassword,
-      hostLink,
+      meetingLink, meetingId, meetingPassword, hostLink,
       createdAt: new Date(),
     };
 
@@ -558,9 +520,7 @@ export async function POST(req) {
 
     const transporter = getTransporter();
 
-    // ═══════════════════════════════════════
-    // 🔥 EMAIL 1: Send to PATIENT
-    // ═══════════════════════════════════════
+    // EMAIL 1: PATIENT
     if (email) {
       try {
         const patientEmailHTML = getBookingConfirmationEmailHTML({
@@ -576,15 +536,12 @@ export async function POST(req) {
             : `📋 Appointment Request Received - ${department}`,
           html: patientEmailHTML,
         });
-        console.log(`✅ Patient email sent to ${email}`);
       } catch (emailErr) {
         console.error('⚠️ Patient email failed:', emailErr.message);
       }
     }
 
-    // ═══════════════════════════════════════
-    // 🔥 EMAIL 2: Send to ADMIN
-    // ═══════════════════════════════════════
+    // EMAIL 2: ADMIN
     if (ADMIN_EMAIL) {
       try {
         const adminEmailHTML = getAdminNotificationHTML({
@@ -602,12 +559,9 @@ export async function POST(req) {
           subject: adminSubject,
           html: adminEmailHTML,
         });
-        console.log(`✅ Admin email sent to ${ADMIN_EMAIL}`);
       } catch (adminEmailErr) {
         console.error('⚠️ Admin email failed:', adminEmailErr.message);
       }
-    } else {
-      console.warn('⚠️ ADMIN_EMAIL not set in .env.local — admin not notified');
     }
 
     return NextResponse.json({
@@ -666,7 +620,6 @@ async function findNextAvailableSlot(department, currentDate, currentTime, clien
 // =============================================
 // GET — FETCH ALL BOOKINGS
 // =============================================
-// GET FETCH ALL BOOKINGS
 export async function GET(request) {
   const { client, collection } = await getCollection();
   try {
@@ -674,12 +627,11 @@ export async function GET(request) {
     const doctorId = searchParams.get('doctorId');
     const dept     = searchParams.get('dept');
 
-    // Build query — if doctorId provided, filter by it
     let query = {};
     if (doctorId) {
       query.doctorId = doctorId;
     } else if (dept) {
-      query.department = dept;  // admin still can filter by dept
+      query.department = dept;
     }
 
     const bookings = await collection
@@ -698,14 +650,14 @@ export async function GET(request) {
 
 
 // =============================================
-// PUT — UPDATE STATUS + ZOOM + EMAILS
+// PUT — UPDATE STATUS + ZOOM + RESCHEDULE
 // =============================================
 export async function PUT(request) {
   const { client, collection } = await getCollection();
 
   try {
     const body = await request.json();
-    const { id, status, cancelReason } = body;
+    const { id, status, cancelReason, newDate, newTime } = body;
 
     if (!id || !status) {
       return NextResponse.json({ error: 'ID/Status required' }, { status: 400 });
@@ -722,7 +674,29 @@ export async function PUT(request) {
     let hostLink = booking.hostLink || '';
     let nextSlot = null;
 
-    // CREATE ZOOM IF CONFIRMING ONLINE + NO LINK YET
+    // 🔥 CREATE ZOOM IF RESCHEDULING ONLINE
+    if (status === 'rescheduled' && booking.appointmentType === 'Online') {
+      try {
+        console.log('📹 Re-creating Zoom meeting for rescheduled time...');
+        const zoomData = await createZoomMeeting({
+          name: booking.name,
+          email: booking.email,
+          department: booking.department,
+          date: newDate,
+          time: newTime,
+        });
+
+        meetingLink = zoomData.meetLink;
+        meetingId = zoomData.meetingId;
+        meetingPassword = zoomData.meetingPassword;
+        hostLink = zoomData.hostLink || '';
+        console.log('✅ Rescheduled Zoom meeting created:', meetingId);
+      } catch (zoomError) {
+        console.error('❌ Zoom reschedule failed:', zoomError.message);
+      }
+    }
+
+    // 🔥 CREATE ZOOM IF CONFIRMING ONLINE + NO LINK YET
     if (status === 'confirmed' && booking.appointmentType === 'Online' && !meetingLink) {
       try {
         console.log('📹 Creating Zoom meeting on confirm...');
@@ -738,7 +712,6 @@ export async function PUT(request) {
         meetingId = zoomData.meetingId;
         meetingPassword = zoomData.meetingPassword;
         hostLink = zoomData.hostLink || '';
-
         console.log('✅ Zoom meeting created:', meetingId);
       } catch (zoomError) {
         console.error('❌ Zoom creation failed:', zoomError.message);
@@ -760,40 +733,49 @@ export async function PUT(request) {
       }
     }
 
+    // Prepare Update Object
+    const updateData = {
+      status,
+      updatedAt: new Date(),
+      cancelReason: cancelReason || '',
+      nextSuggestedSlot: nextSlot || null,
+      meetingLink,
+      meetingId,
+      meetingPassword,
+      hostLink,
+    };
+
+    // If rescheduled, update the actual date and time in DB
+    if (status === 'rescheduled') {
+      updateData.date = newDate;
+      updateData.time = newTime;
+    }
+
     // Update booking in DB
     await collection.updateOne(
       { _id: new ObjectId(id) },
-      {
-        $set: {
-          status,
-          updatedAt: new Date(),
-          cancelReason: cancelReason || '',
-          nextSuggestedSlot: nextSlot || null,
-          meetingLink,
-          meetingId,
-          meetingPassword,
-          hostLink,
-        },
-      }
+      { $set: updateData }
     );
 
     const transporter = getTransporter();
 
-    // ═══════════════════════════════════════
-    // 🔥 EMAIL TO PATIENT (with Zoom link)
-    // ═══════════════════════════════════════
+    // EMAIL TO PATIENT
     if (booking.email) {
       try {
         const subjects = {
           confirmed: meetingLink
             ? `✅ Confirmed | Zoom Meeting Link - ${booking.department}`
             : `✅ Appointment Confirmed - ${booking.department}`,
+          rescheduled: `🔄 Appointment Rescheduled - ${booking.department}`,
           cancelled: `❌ Appointment Cancelled - ${booking.department}`,
           completed: `🎉 Thank You - ${booking.department}`,
         };
 
+        // Merge updated data so email shows the *new* date/time
+        const emailBookingData = { ...booking, ...updateData };
+
         const emailHTML = getStatusEmailHTML(
-          { ...booking, meetingLink, meetingId, meetingPassword },
+          emailBookingData,
           status,
           nextSlot,
           meetingLink
@@ -813,14 +795,16 @@ export async function PUT(request) {
       }
     }
 
-    // ═══════════════════════════════════════
-    // 🔥 EMAIL TO ADMIN (status update copy)
-    // ═══════════════════════════════════════
+    // EMAIL TO ADMIN
     if (ADMIN_EMAIL) {
       try {
-        const adminHTML = getAdminStatusUpdateHTML(booking, status, meetingLink);
+        // Merge updated data so admin sees new date/time
+        const adminBookingData = { ...booking, ...updateData };
+        const adminHTML = getAdminStatusUpdateHTML(adminBookingData, status, meetingLink);
+        
         const adminSubject = {
           confirmed: `✅ Confirmed: ${booking.name} | ${booking.department}`,
+          rescheduled: `🔄 Rescheduled: ${booking.name} | ${booking.department}`,
           cancelled: `❌ Cancelled: ${booking.name} | ${booking.department}`,
           completed: `🎉 Completed: ${booking.name} | ${booking.department}`,
         };
@@ -831,7 +815,6 @@ export async function PUT(request) {
           subject: adminSubject[status] || `Booking Update: ${booking.name}`,
           html: adminHTML,
         });
-        console.log(`✅ Admin ${status} email sent to ${ADMIN_EMAIL}`);
       } catch (e) {
         console.error('⚠️ Admin email failed:', e.message);
       }
@@ -842,6 +825,8 @@ export async function PUT(request) {
       nextSuggestedSlot: nextSlot,
       meetingLink,
       meetingId,
+      newDate: updateData.date,
+      newTime: updateData.time
     });
   } catch (error) {
     console.error('PUT Error:', error);

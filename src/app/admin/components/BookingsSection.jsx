@@ -18,6 +18,8 @@ export default function BookingsSection() {
   const [viewingFile, setViewingFile] = useState(null);
   const [filterDoctor, setFilterDoctor] = useState('all');
 
+  // 🔥 RESCHEDULE STATE
+  const [rescheduleData, setRescheduleData] = useState(null);
 
   const fetchBookings = async () => {
     try {
@@ -38,57 +40,44 @@ export default function BookingsSection() {
     fetchBookings();
   }, []);
 
-  // =======================================================
-  // 🔥 SIMPLIFIED: No more prompt() — uses auto-generated link
-  // =======================================================
-  const updateStatus = async (id, newStatus) => {
+  const updateStatus = async (id, newStatus, extraData = {}) => {
     const booking = bookings.find((b) => b._id === id);
 
-    const statusLabels = {
-      confirmed: 'CONFIRM',
-      cancelled: 'CANCEL',
-      completed: 'COMPLETE',
-    };
+    if (newStatus !== 'rescheduled') {
+      const statusLabels = {
+        confirmed: 'CONFIRM',
+        cancelled: 'CANCEL',
+        completed: 'COMPLETE',
+      };
 
-    // Build confirmation message
-    let confirmMsg = `${statusLabels[newStatus]} this appointment?`;
+      let confirmMsg = `${statusLabels[newStatus]} this appointment?`;
 
-    if (booking?.email) {
-      confirmMsg += `\n📧 Email will be sent to: ${booking.email}`;
+      if (booking?.email) {
+        confirmMsg += `\n📧 Email will be sent to: ${booking.email}`;
+      }
+
+      if (newStatus === 'confirmed' && booking?.appointmentType === 'Online' && booking?.meetingLink) {
+        confirmMsg += `\n📹 Zoom link will be included in email.`;
+      }
+
+      if (newStatus === 'confirmed' && booking?.appointmentType === 'Online' && !booking?.meetingLink) {
+        confirmMsg += `\n📹 Zoom meeting will be auto-created now.`;
+      }
+
+      if (!confirm(confirmMsg)) return;
     }
-
-    // If online booking with zoom link ready
-    if (
-      newStatus === 'confirmed' &&
-      booking?.appointmentType === 'Online' &&
-      booking?.meetingLink
-    ) {
-      confirmMsg += `\n📹 Zoom link will be included in email.`;
-    }
-
-    // If online but NO zoom link (will be created on confirm)
-    if (
-      newStatus === 'confirmed' &&
-      booking?.appointmentType === 'Online' &&
-      !booking?.meetingLink
-    ) {
-      confirmMsg += `\n📹 Zoom meeting will be auto-created now.`;
-    }
-
-    if (!confirm(confirmMsg)) return;
 
     setUpdatingId(id);
     try {
       const res = await fetch('/api/booking', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status: newStatus }),
+        body: JSON.stringify({ id, status: newStatus, ...extraData }),
       });
 
       if (res.ok) {
         const responseData = await res.json();
 
-        // Update local state with new data from server
         setBookings((prev) =>
           prev.map((b) =>
             b._id === id
@@ -97,20 +86,19 @@ export default function BookingsSection() {
                   status: newStatus,
                   meetingLink: responseData.meetingLink || b.meetingLink,
                   meetingId: responseData.meetingId || b.meetingId,
+                  date: responseData.newDate || b.date,
+                  time: responseData.newTime || b.time,
                 }
               : b
           )
         );
 
         let successMsg = `✅ Status updated to "${newStatus}"`;
-        if (booking?.email) {
-          successMsg += `\n📧 Email sent to ${booking.email}`;
-        }
-        if (responseData.meetingLink) {
-          successMsg += `\n📹 Zoom link: ${responseData.meetingLink}`;
-        }
+        if (booking?.email) successMsg += `\n📧 Email sent to ${booking.email}`;
+        if (responseData.meetingLink) successMsg += `\n📹 Zoom link: ${responseData.meetingLink}`;
 
         alert(successMsg);
+        setRescheduleData(null); // Close modal
       } else {
         const errData = await res.json();
         alert(`❌ Failed: ${errData.error || 'Unknown error'}`);
@@ -121,6 +109,38 @@ export default function BookingsSection() {
     } finally {
       setUpdatingId(null);
     }
+  };
+
+  // 🔥 RESCHEDULE LOGIC
+  const openRescheduleModal = (booking) => {
+    setRescheduleData({ booking, date: '', time: '', reason: '', slots: [], loadingSlots: false });
+  };
+
+  const fetchAvailableSlots = async (dateStr, dept) => {
+    setRescheduleData(prev => ({ ...prev, date: dateStr, time: '', loadingSlots: true }));
+    try {
+      const res = await fetch(`/api/slots?date=${dateStr}&department=${encodeURIComponent(dept)}`);
+      const data = await res.json();
+      if (data.slots) {
+        const available = data.slots.filter(s => s.status !== 'closed' && s.status !== 'booked');
+        setRescheduleData(prev => ({ ...prev, slots: available }));
+      } else {
+        setRescheduleData(prev => ({ ...prev, slots: [] }));
+      }
+    } catch {
+      alert('Failed to fetch slots');
+    } finally {
+      setRescheduleData(prev => ({ ...prev, loadingSlots: false }));
+    }
+  };
+
+  const submitReschedule = () => {
+    if (!rescheduleData.date || !rescheduleData.time) return alert('Select new date and time');
+    updateStatus(rescheduleData.booking._id, 'rescheduled', {
+      newDate: rescheduleData.date,
+      newTime: rescheduleData.time,
+      cancelReason: rescheduleData.reason
+    });
   };
 
   const deleteBooking = async (id) => {
@@ -188,17 +208,16 @@ export default function BookingsSection() {
       fileType.includes('jpeg') || fileType.includes('png');
   };
 
- const filteredBookings = bookings.filter((booking) => {
-  const matchesSearch =
-    booking.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    booking.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    booking.phone?.includes(searchTerm) ||
-    booking.department?.toLowerCase().includes(searchTerm.toLowerCase());
-  const matchesStatus = filterStatus === 'all' || booking.status === filterStatus;
-  const matchesDoctor = filterDoctor === 'all' || booking.doctorId === filterDoctor; // ← ADD
-  return matchesSearch && matchesStatus && matchesDoctor;
-});
-
+  const filteredBookings = bookings.filter((booking) => {
+    const matchesSearch =
+      booking.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      booking.phone?.includes(searchTerm) ||
+      booking.department?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = filterStatus === 'all' || booking.status === filterStatus;
+    const matchesDoctor = filterDoctor === 'all' || booking.doctorId === filterDoctor;
+    return matchesSearch && matchesStatus && matchesDoctor;
+  });
 
   const counts = {
     all: bookings.length,
@@ -214,12 +233,51 @@ export default function BookingsSection() {
       case 'pending': return 'badge-pending';
       case 'cancelled': return 'badge-cancelled';
       case 'completed': return 'badge-completed';
+      case 'rescheduled': return 'badge-rescheduled'; // Make sure to add this in your CSS
       default: return 'badge-pending';
     }
   };
 
   return (
     <div className="bookings-section">
+      <style>{`
+        .badge-rescheduled { background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; }
+      `}</style>
+      
+      {/* ── RESCHEDULE MODAL ── */}
+      {rescheduleData && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div style={{ background: '#fff', borderRadius: 16, width: '100%', maxWidth: 450, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ background: '#D97706', padding: '16px 20px', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}><RefreshCw size={18}/> Reschedule Appointment</h3>
+              <button onClick={() => setRescheduleData(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }}><X size={20} /></button>
+            </div>
+            <div style={{ padding: '20px' }}>
+              <p style={{ margin: '0 0 16px', fontSize: 14 }}>Rescheduling <strong>{rescheduleData.booking.name}</strong></p>
+              
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 6 }}>New Date</label>
+              <input type="date" min={new Date().toISOString().split('T')[0]} value={rescheduleData.date} onChange={e => fetchAvailableSlots(e.target.value, rescheduleData.booking.department)} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #ccc', marginBottom: 16 }} />
+
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 6 }}>New Time Slot</label>
+              {rescheduleData.loadingSlots ? <div style={{ marginBottom: 16, fontSize: 13, color: '#666' }}>Loading slots...</div> : (
+                <select value={rescheduleData.time} onChange={e => setRescheduleData(prev => ({ ...prev, time: e.target.value }))} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #ccc', marginBottom: 16 }}>
+                  <option value="">-- Select Time --</option>
+                  {rescheduleData.slots.map(s => <option key={s.time} value={s.time}>{s.time}</option>)}
+                </select>
+              )}
+
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 'bold', marginBottom: 6 }}>Reason (Sent to Patient)</label>
+              <textarea rows={2} value={rescheduleData.reason} onChange={e => setRescheduleData(prev => ({ ...prev, reason: e.target.value }))} style={{ width: '100%', padding: '10px', borderRadius: 8, border: '1px solid #ccc', marginBottom: 20 }} />
+
+              <div style={{ display: 'flex', gap: 10 }}>
+                <button style={{ flex: 1, padding: '10px', border: '1px solid #ccc', borderRadius: 8, background: '#fff', cursor: 'pointer' }} onClick={() => setRescheduleData(null)}>Cancel</button>
+                <button style={{ flex: 1, padding: '10px', border: 'none', borderRadius: 8, background: '#D97706', color: '#fff', cursor: 'pointer', fontWeight: 'bold' }} onClick={submitReschedule}>Confirm Reschedule</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* File Viewer Modal */}
       {viewingFile && (
         <div className="file-modal-overlay" onClick={closeFileViewer}>
@@ -278,20 +336,20 @@ export default function BookingsSection() {
             <option value="all">All Status</option>
             <option value="pending">Pending</option>
             <option value="confirmed">Confirmed</option>
+            <option value="rescheduled">Rescheduled</option>
             <option value="cancelled">Cancelled</option>
             <option value="completed">Completed</option>
           </select>
-          {/* ✅ ADD THIS — Doctor filter */}
-<div className="filter-container">
-  <User size={20} />
-  <select value={filterDoctor} onChange={(e) => setFilterDoctor(e.target.value)}>
-    <option value="all">All Doctors</option>
-    {[...new Map(bookings.filter(b => b.doctorName).map(b => [b.doctorId, b.doctorName])).entries()]
-      .map(([id, name]) => (
-        <option key={id} value={id}>{name}</option>
-      ))}
-  </select>
-</div>
+        </div>
+        <div className="filter-container">
+          <User size={20} />
+          <select value={filterDoctor} onChange={(e) => setFilterDoctor(e.target.value)}>
+            <option value="all">All Doctors</option>
+            {[...new Map(bookings.filter(b => b.doctorName).map(b => [b.doctorId, b.doctorName])).entries()]
+              .map(([id, name]) => (
+                <option key={id} value={id}>{name}</option>
+              ))}
+          </select>
         </div>
         <button className="refresh-btn" onClick={fetchBookings}>
           <RefreshCw size={18} /> Refresh
@@ -332,7 +390,7 @@ export default function BookingsSection() {
                     </span>
                   )}
 
-                  {/* 🔥 ZOOM LINK STATUS BADGES */}
+                  {/* ZOOM LINK STATUS BADGES */}
                   {booking.meetingLink && booking.status === 'pending' && (
                     <span style={{
                       fontSize: '10px', background: '#FEF3C7', color: '#92400E',
@@ -343,7 +401,7 @@ export default function BookingsSection() {
                     </span>
                   )}
 
-                  {booking.meetingLink && booking.status === 'confirmed' && (
+                  {booking.meetingLink && (booking.status === 'confirmed' || booking.status === 'rescheduled') && (
                     <span style={{
                       fontSize: '10px', background: '#D1FAE5', color: '#065F46',
                       padding: '2px 8px', borderRadius: '12px', marginLeft: '4px',
@@ -372,14 +430,14 @@ export default function BookingsSection() {
                   <Building size={16} />
                   <span>{booking.department}</span>
                 </div>
-{booking.doctorName && (
-  <div className="booking-detail">
-    <User size={16} />
-    <span style={{ fontWeight: 600, color: '#0F766E' }}>
-      👨‍⚕️ Dr. {booking.doctorName}
-    </span>
-  </div>
-)}
+                {booking.doctorName && (
+                  <div className="booking-detail">
+                    <User size={16} />
+                    <span style={{ fontWeight: 600, color: '#0F766E' }}>
+                      👨‍⚕️ Dr. {booking.doctorName}
+                    </span>
+                  </div>
+                )}
 
                 <div className="booking-detail">
                   <Calendar size={16} />
@@ -412,7 +470,7 @@ export default function BookingsSection() {
                   </div>
                 )}
 
-                {/* 🔥 ZOOM MEETING LINK DISPLAY */}
+                {/* ZOOM MEETING LINK DISPLAY */}
                 {booking.meetingLink && (
                   <div style={{
                     background: '#EFF6FF', padding: '14px 16px', borderRadius: '10px',
@@ -478,7 +536,6 @@ export default function BookingsSection() {
                         <ExternalLink size={12} /> Open
                       </a>
 
-                      {/* Admin host link */}
                       {booking.hostLink && (
                         <a
                           href={booking.hostLink}
@@ -550,14 +607,14 @@ export default function BookingsSection() {
                 )}
               </div>
 
-              {/* Footer */}
+              {/* Footer Actions */}
               <div className="booking-card-footer">
                 <span className="booking-created">
                   Booked: {formatCreatedAt(booking.createdAt)}
                 </span>
 
                 <div className="booking-actions">
-                  {booking.status !== 'confirmed' && booking.status !== 'completed' && (
+                  {(booking.status === 'pending' || booking.status === 'rescheduled') && (
                     <button
                       className="action-btn confirm-btn"
                       onClick={() => updateStatus(booking._id, 'confirmed')}
@@ -579,15 +636,24 @@ export default function BookingsSection() {
                     </button>
                   )}
 
-                  {booking.status !== 'cancelled' && booking.status !== 'completed' && (
-                    <button
-                      className="action-btn cancel-action-btn"
-                      onClick={() => updateStatus(booking._id, 'cancelled')}
-                      disabled={updatingId === booking._id}
-                    >
-                      <XCircle size={14} />
-                      {updatingId === booking._id ? 'Processing...' : 'Cancel'}
-                    </button>
+                  {(booking.status !== 'cancelled' && booking.status !== 'completed') && (
+                    <>
+                      <button 
+                        className="action-btn" 
+                        style={{ background: '#FEF3C7', color: '#D97706', border: '1px solid #FCD34D' }} 
+                        onClick={() => openRescheduleModal(booking)}
+                      >
+                        <RefreshCw size={14} /> Reschedule
+                      </button>
+                      <button
+                        className="action-btn cancel-action-btn"
+                        onClick={() => updateStatus(booking._id, 'cancelled')}
+                        disabled={updatingId === booking._id}
+                      >
+                        <XCircle size={14} />
+                        {updatingId === booking._id ? 'Processing...' : 'Cancel'}
+                      </button>
+                    </>
                   )}
 
                   <button
