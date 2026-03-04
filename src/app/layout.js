@@ -25,41 +25,19 @@ export default function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
       </head>
-      <body>
+      {/* ✅ Added margin: 0, padding: 0, and overflowX: 'hidden' to prevent white gaps */}
+      <body style={{ margin: 0, padding: 0, overflowX: 'hidden', backgroundColor: '#F0FDF4' }}>
         <Header />
-        <main style={{ paddingTop: '60px' }}>{children}</main>
+        
+        {/* ✅ Forced main to be 100% width with no restrictive boundaries */}
+        <main style={{ paddingTop: '60px', width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+          {children}
+        </main>
+        
         <Footer />
 
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            duration: 4000,
-            style: {
-              background: '#10B981',
-              color: '#fff',
-              fontWeight: '600',
-              borderRadius: '12px',
-              // padding: '16px 24px',
-              fontSize: '15px',
-            },
-            success: {
-              style: { background: '#10B981' },
-              iconTheme: { primary: '#fff', secondary: '#10B981' },
-            },
-            error: {
-              style: { background: '#EF4444' },
-              iconTheme: { primary: '#fff', secondary: '#EF4444' },
-            },
-            loading: {
-              style: { background: '#3B82F6' },
-            },
-          }}
-        />
-
-        <Script
-          src="https://checkout.razorpay.com/v1/checkout.js"
-          strategy="lazyOnload"
-        />
+        <Toaster position="top-right" />
+        <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="lazyOnload" />
       </body>
     </html>
   );
