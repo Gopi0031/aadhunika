@@ -166,26 +166,27 @@ export default function DoctorDashboard() {
   const statusMeta = (s) => ({
     pending:     { bg: '#FEF3C7', color: '#D97706', border: '#FDE68A' },
     confirmed:   { bg: '#D1FAE5', color: '#059669', border: '#A7F3D0' },
-    rescheduled: { bg: '#FEF3C7', color: '#D97706', border: '#FCD34D' }, // Added Rescheduled color
+    rescheduled: { bg: '#FEF3C7', color: '#D97706', border: '#FCD34D' },
     cancelled:   { bg: '#FEE2E2', color: '#EF4444', border: '#FECACA' },
     completed:   { bg: '#E0F2FE', color: '#0369A1', border: '#BAE6FD' },
   }[s] || { bg: '#F1F5F9', color: '#64748B', border: '#E2E8F0' });
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard',    icon: TrendingUp   },
-    { id: 'schedule',  label: 'My Schedule',  icon: CalendarDays },
-    { id: 'bookings',  label: 'All Bookings', icon: Calendar     },
-    { id: 'profile',   label: 'My Profile',   icon: User         },
+    { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
+    { id: 'schedule', label: 'My Schedule', icon: CalendarDays },
+    { id: 'bookings', label: 'All Bookings', icon: Calendar },
+    { id: 'profile', label: 'My Profile', icon: User },
   ];
 
   if (!doctor) return null;
 
-  /* ── Shared inline style objects ── */
+  /* ── inline styles object S ── */
   const S = {
-    root:   { display:'flex', minHeight:'100vh', fontFamily:"'Segoe UI',sans-serif", background:'#F1F5F9', color:'#0F172A' },
-    overlay:{ position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:40 },
+    root: { display:'flex', minHeight:'100vh', fontFamily:"'Segoe UI',sans-serif", background:'#F1F5F9', color:'#0F172A' },
+    overlay: { position:'fixed', inset:0, background:'rgba(0,0,0,0.45)', zIndex:40 },
     sidebar: (open) => ({
-      width: 260, background:'linear-gradient(180deg,#0F766E 0%,#065F46 100%)',
+      width: 260,
+      background:'linear-gradient(180deg,#0F766E 0%,#065F46 100%)',
       display:'flex', flexDirection:'column', flexShrink:0,
       position:'fixed', top:0, left:0, bottom:0, zIndex:50,
       transform: open ? 'translateX(0)' : 'translateX(-100%)',
@@ -357,11 +358,15 @@ export default function DoctorDashboard() {
 
         {/* Nav */}
         <nav style={{ flex:1, padding:'14px 10px', display:'flex', flexDirection:'column', gap:3, overflowY:'auto' }}>
-          {menuItems.map(item => (
+          {[
+            { id: 'dashboard', label: 'Dashboard', icon: TrendingUp },
+            { id: 'schedule', label: 'My Schedule', icon: CalendarDays },
+            { id: 'bookings', label: 'All Bookings', icon: Calendar },
+            { id: 'profile', label: 'My Profile', icon: User },
+          ].map(item => (
             <button
               key={item.id}
-              className="dd-nav-btn"
-              style={S.navBtn(activeSection === item.id)}
+              style={S.navBtn(activeSection===item.id)}
               onClick={() => { setActiveSection(item.id); setSidebarOpen(false); }}
             >
               <item.icon size={17} />
@@ -399,7 +404,7 @@ export default function DoctorDashboard() {
       <div style={{ flex:1, display:'flex', flexDirection:'column', minWidth:0 }}>
 
         {/* Topbar */}
-        <header className="doctor-topbar" style={S.topbar}>
+        <header style={S.topbar}>
           <div style={{ display:'flex', alignItems:'center', gap:14, minWidth:0 }}>
             <button style={S.iconBtn} onClick={() => setSidebarOpen(true)}>
               <Menu size={22} />
@@ -409,20 +414,14 @@ export default function DoctorDashboard() {
                 whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>
                 {menuItems.find(m => m.id === activeSection)?.label}
               </h1>
-              <p style={{ margin:0, fontSize:11, color:'#64748B' }}>
-                Doctor Portal · {doctor.dept}
-              </p>
+              <p style={{ margin:0, fontSize:11, color:'#64748B' }}>Doctor Portal · {doctor.dept}</p>
             </div>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:10, flexShrink:0 }}>
             {pendingBookings.length > 0 && (
-              <div style={{ position:'relative', display:'flex', alignItems:'center',
-                justifyContent:'center', width:38, height:38, borderRadius:10,
-                background:'#FEF3C7', color:'#D97706', cursor:'pointer' }}>
+              <div style={{ position:'relative', display:'flex', alignItems:'center', justifyContent:'center', width:38, height:38, borderRadius:10, background:'#FEF3C7', color:'#D97706', cursor:'pointer' }}>
                 <Bell size={17} />
-                <span style={{ position:'absolute', top:-4, right:-4, background:'#EF4444',
-                  color:'#fff', borderRadius:'50%', width:16, height:16,
-                  fontSize:9, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <span style={{ position:'absolute', top:-4, right:-4, background:'#EF4444', color:'#fff', borderRadius:'50%', width:16, height:16, fontSize:9, fontWeight:800, display:'flex', alignItems:'center', justifyContent:'center' }}>
                   {pendingBookings.length}
                 </span>
               </div>
@@ -437,15 +436,10 @@ export default function DoctorDashboard() {
         </header>
 
         {/* Content */}
-        <main style={{ flex:1, padding:'clamp(16px,3vw,28px)',
-          maxWidth:1080, width:'100%', margin:'0 auto', boxSizing:'border-box' }}>
-
+        <main style={{ flex:1, padding:'clamp(16px,3vw,28px)', maxWidth:1080, width:'100%', margin:'0 auto' }}>
           {loading ? (
-            <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
-              justifyContent:'center', padding:80, color:'#64748B', gap:16 }}>
-              <div style={{ width:38, height:38, border:'3px solid #CCFBF1',
-                borderTopColor:'#0F766E', borderRadius:'50%',
-                animation:'spin 0.8s linear infinite' }} />
+            <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:80, color:'#64748B', gap:16 }}>
+              <div style={{ width:38, height:38, border:'3px solid #CCFBF1', borderTopColor:'#0F766E', borderRadius:'50%', animation:'spin 0.8s linear infinite' }} />
               <p style={{ fontWeight:600, margin:0 }}>Loading your data...</p>
             </div>
           ) : (
@@ -455,7 +449,7 @@ export default function DoctorDashboard() {
                 <div className="dd-fade">
                   {/* Welcome Banner */}
                   <div style={{
-                    background:'linear-gradient(135deg,#0F766E 0%,#059669 60%,#0284C7 100%)',
+                    background:'linear-gradient(135deg,#0F766E,#059669,#0284C7)',
                     borderRadius:20, padding:'clamp(20px,3vw,30px)',
                     marginBottom:22, color:'#fff',
                     display:'flex', justifyContent:'space-between',
@@ -463,8 +457,7 @@ export default function DoctorDashboard() {
                     position:'relative', overflow:'hidden',
                   }}>
                     <div>
-                      <h2 style={{ margin:'0 0 6px', fontSize:'clamp(17px,3vw,22px)',
-                        fontWeight:800 }}>
+                      <h2 style={{ margin:'0 0 6px', fontSize:'clamp(17px,3vw,22px)', fontWeight:800 }}>
                         Good {greeting}, {doctor.name.split(' ')[0]}! 👋
                       </h2>
                       <p style={{ margin:0, fontSize:13, opacity:0.82 }}>
@@ -495,12 +488,11 @@ export default function DoctorDashboard() {
                       { label:'Pending',          value:pendingBookings.length,    icon:'⏳', color:'#D97706', bar:'#FBBF24' },
                       { label:'Confirmed',        value:confirmedBookings.length,  icon:'✅', color:'#059669', bar:'#059669' },
                     ].map((s, i) => (
-                      <div key={i} className="dd-stat-card" style={S.statCard}>
+                      <div key={i} style={S.statCard} className="dd-stat-card">
                         <div style={{ fontSize:24, marginBottom:10 }}>{s.icon}</div>
                         <div style={{ fontSize:30, fontWeight:900, color:s.color }}>{s.value}</div>
                         <div style={{ fontSize:12, color:'#64748B', fontWeight:600, marginTop:4 }}>{s.label}</div>
-                        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:3,
-                          background:s.bar, borderRadius:'0 0 16px 16px' }} />
+                        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:3, background:s.bar, borderRadius:'0 0 16px 16px' }} />
                       </div>
                     ))}
                   </div>
@@ -574,8 +566,6 @@ export default function DoctorDashboard() {
                       const active = filterStatus === s;
                       return (
                         <button key={s}
-                          className="dd-pill"
-                          onClick={() => setFilterStatus(s)}
                           style={{
                             display:'flex', alignItems:'center', gap:5,
                             padding:'5px 13px', borderRadius:20,
@@ -629,6 +619,7 @@ export default function DoctorDashboard() {
                       <p style={{ color:'rgba(255,255,255,0.8)', fontSize:13, margin:0 }}>
                         {doctor.specialization || doctor.dept} · {doctor.dept}
                       </p>
+                      {/* Stats */}
                       <div style={{ display:'flex', justifyContent:'center', gap:28,
                         marginTop:20, paddingTop:18, borderTop:'1px solid rgba(255,255,255,0.15)' }}>
                         {[
@@ -729,32 +720,39 @@ export default function DoctorDashboard() {
   );
 }
 
-/* ── Empty State ── */
+// Empty State component
 function EmptyState({ icon, msg }) {
   return (
-    <div style={{ display:'flex', flexDirection:'column', alignItems:'center',
-      justifyContent:'center', padding:'48px 20px', color:'#94A3B8', gap:10 }}>
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:'48px 20px', color:'#94A3B8', gap:10 }}>
       <div style={{ fontSize:36 }}>{icon}</div>
       <p style={{ fontWeight:600, margin:0, fontSize:14 }}>{msg}</p>
     </div>
   );
 }
 
-/* ── Booking Card ── */
+// Booking Card component
 function BookingCard({ booking: b, onStatus, onReschedule, statusMeta, showDate }) {
   const [expanded, setExpanded] = useState(false);
   const s = statusMeta(b.status);
 
   return (
-    <div className="dd-booking-row"
-      style={{ borderBottom:'1px solid #F1F5F9', transition:'background 0.15s' }}>
-
-      {/* Main clickable row */}
+    <div style={{
+      borderBottom:'1px solid #F1F5F9',
+      transition:'background 0.15s, transform 0.3s',
+      cursor:'pointer',
+      borderRadius: expanded ? 8 : 0,
+      boxShadow: expanded ? '0 4px 16px rgba(0,0,0,0.1)' : 'none',
+      background:'#fff',
+      marginBottom:8,
+      padding:'14px 22px',
+      display:'flex',
+      flexDirection:'column',
+      gap:10,
+    }}>
+      {/* Main row */}
       <div
         onClick={() => setExpanded(!expanded)}
-        style={{ display:'flex', alignItems:'center', gap:13,
-          padding:'14px 22px', cursor:'pointer' }}>
-
+        style={{ display:'flex', alignItems:'center', gap:13 }}>
         {/* Avatar */}
         <div style={{ width:42, height:42, borderRadius:12, flexShrink:0,
           background:'linear-gradient(135deg,#CCFBF1,#A7F3D0)',
@@ -762,7 +760,6 @@ function BookingCard({ booking: b, onStatus, onReschedule, statusMeta, showDate 
           fontWeight:800, fontSize:17, color:'#0F766E' }}>
           {b.name?.charAt(0)?.toUpperCase()}
         </div>
-
         {/* Info */}
         <div style={{ flex:1, minWidth:0 }}>
           <p style={{ margin:0, fontWeight:700, fontSize:14, color:'#1E293B',
@@ -784,7 +781,6 @@ function BookingCard({ booking: b, onStatus, onReschedule, statusMeta, showDate 
             )}
           </div>
         </div>
-
         {/* Right */}
         <div style={{ display:'flex', flexDirection:'column', alignItems:'flex-end',
           gap:6, flexShrink:0 }}>
@@ -800,12 +796,10 @@ function BookingCard({ booking: b, onStatus, onReschedule, statusMeta, showDate 
         </div>
       </div>
 
-      {/* Expanded */}
+      {/* Expanded details */}
       {expanded && (
-        <div className="dd-expand"
-          style={{ padding:'0 22px 18px', borderTop:'1px solid #F1F5F9' }}>
-
-          {/* Contact row */}
+        <div style={{ padding:'0 22px 18px', borderTop:'1px solid #F1F5F9' }} className="dd-expand">
+          {/* contact info */}
           <div style={{ display:'flex', flexWrap:'wrap', gap:8, padding:'12px 0 10px' }}>
             {b.email && (
               <div style={{ display:'flex', alignItems:'center', gap:6, fontSize:12,
@@ -830,7 +824,7 @@ function BookingCard({ booking: b, onStatus, onReschedule, statusMeta, showDate 
             )}
           </div>
 
-          {/* Message */}
+          {/* message */}
           {b.message && (
             <div style={{ fontSize:12, color:'#64748B', background:'#F8FAFC',
               borderLeft:'3px solid #CBD5E1', padding:'8px 12px',
@@ -839,86 +833,78 @@ function BookingCard({ booking: b, onStatus, onReschedule, statusMeta, showDate 
             </div>
           )}
 
-          {/* Zoom confirmed */}
+          {/* zoom meeting & pass */}
           {b.appointmentType === 'Online' && b.meetingLink && (b.status === 'confirmed' || b.status === 'rescheduled') && (
-            <div style={{ background:'#EFF6FF', border:'1.5px solid #93C5FD',
-              borderRadius:10, padding:'12px 14px', marginBottom:10 }}>
-              <p style={{ margin:'0 0 5px', fontSize:11, fontWeight:800, color:'#1E40AF' }}>
-                📹 Zoom Meeting
-              </p>
-              <a href={b.meetingLink} target="_blank" rel="noopener noreferrer"
-                className="dd-zoom-link"
-                style={{ fontSize:12, color:'#2563EB', fontWeight:600,
-                  wordBreak:'break-all', display:'block' }}>
+            <div style={{ background:'#EFF6FF', border:'1.5px solid #93C5FD', borderRadius:10, padding:'12px 14px', marginBottom:10 }}>
+              <p style={{ margin:'0 0 5px', fontSize:11, fontWeight:800, color:'#1E40AF' }}>📹 Zoom Meeting</p>
+              <a href={b.meetingLink} target="_blank" rel="noopener noreferrer" className="dd-zoom-link" style={{ fontSize:12, color:'#2563EB', fontWeight:600, wordBreak:'break-all' }}>
                 {b.meetingLink}
               </a>
               {b.meetingPassword && (
-                <p style={{ margin:'6px 0 0', fontSize:11, color:'#92400E',
-                  background:'#FEF3C7', padding:'4px 8px', borderRadius:6 }}>
-                  🔐 Password: <code style={{ fontFamily:'monospace', fontWeight:800 }}>
-                    {b.meetingPassword}
-                  </code>
+                <p style={{ margin:'6px 0 0', fontSize:11, color:'#92400E', background:'#FEF3C7', padding:'4px 8px', borderRadius:6 }}>
+                  🔐 Password: <code style={{ fontFamily:'monospace', fontWeight:800 }}>{b.meetingPassword}</code>
                 </p>
               )}
             </div>
           )}
 
-          {/* Zoom pending */}
+          {/* zoom link pending */}
           {b.appointmentType === 'Online' && !b.meetingLink && b.status === 'pending' && (
-            <div style={{ fontSize:11, fontWeight:600, color:'#92400E',
-              background:'#FEF3C7', border:'1px solid #FCD34D',
-              padding:'7px 11px', borderRadius:8, marginBottom:10 }}>
+            <div style={{ fontSize:11, fontWeight:600, color:'#92400E', background:'#FEF3C7', border:'1px solid #FCD34D', padding:'7px 11px', borderRadius:8, marginBottom:10 }}>
               ⚠️ Zoom link will be auto-created on confirmation
             </div>
           )}
 
-          {/* Actions */}
+          {/* actions */}
           <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginTop:6 }}>
             {(b.status === 'pending' || b.status === 'rescheduled') && (
-              <>
-                <button className="dd-action-btn"
-                  onClick={() => onStatus(b._id, 'confirmed')}
-                  style={{ display:'flex', alignItems:'center', gap:5,
-                    padding:'7px 14px', borderRadius:9, border:'none',
-                    background:'#D1FAE5', color:'#059669',
-                    fontSize:12, fontWeight:700, cursor:'pointer',
-                    fontFamily:'inherit', transition:'all 0.2s' }}>
-                  <CheckCircle size={13} />
-                  {b.appointmentType === 'Online' && !b.meetingLink ? 'Confirm + Zoom' : 'Confirm'}
-                </button>
-              </>
+              <button
+                style={{
+                  display:'flex', alignItems:'center', gap:5,
+                  padding:'7px 14px', borderRadius:9, border:'none',
+                  background:'#D1FAE5', color:'#059669',
+                  fontSize:12, fontWeight:700, cursor:'pointer',
+                  fontFamily:'inherit', transition:'all 0.2s'
+                }}
+                onClick={() => onStatus(b._id, 'confirmed')}>
+                <CheckCircle size={13} /> {b.appointmentType === 'Online' && !b.meetingLink ? 'Confirm + Zoom' : 'Confirm'}
+              </button>
             )}
-            
             {b.status === 'confirmed' && (
-              <button className="dd-action-btn"
-                onClick={() => onStatus(b._id, 'completed')}
-                style={{ display:'flex', alignItems:'center', gap:5,
+              <button
+                style={{
+                  display:'flex', alignItems:'center', gap:5,
                   padding:'7px 14px', borderRadius:9, border:'none',
                   background:'#E0F2FE', color:'#0369A1',
                   fontSize:12, fontWeight:700, cursor:'pointer',
-                  fontFamily:'inherit', transition:'all 0.2s' }}>
+                  fontFamily:'inherit', transition:'all 0.2s'
+                }}
+                onClick={() => onStatus(b._id, 'completed')}>
                 <CheckCircle size={13} /> Mark Complete
               </button>
             )}
-
             {(b.status !== 'cancelled' && b.status !== 'completed') && (
               <>
-                <button className="dd-action-btn"
-                  onClick={() => onReschedule(b)}
-                  style={{ display:'flex', alignItems:'center', gap:5,
+                <button
+                  style={{
+                    display:'flex', alignItems:'center', gap:5,
                     padding:'7px 14px', borderRadius:9, border:'none',
                     background:'#FEF3C7', color:'#D97706',
                     fontSize:12, fontWeight:700, cursor:'pointer',
-                    fontFamily:'inherit', transition:'all 0.2s' }}>
+                    fontFamily:'inherit', transition:'all 0.2s'
+                  }}
+                  onClick={() => onReschedule(b)}>
                   <RefreshCw size={13} /> Reschedule
                 </button>
-                <button className="dd-action-btn"
-                  onClick={() => onStatus(b._id, 'cancelled')}
-                  style={{ display:'flex', alignItems:'center', gap:5,
+                <button
+                  style={{
+                    display:'flex', alignItems:'center', gap:5,
                     padding:'7px 14px', borderRadius:9, border:'none',
                     background:'#FEE2E2', color:'#EF4444',
                     fontSize:12, fontWeight:700, cursor:'pointer',
-                    fontFamily:'inherit', transition:'all 0.2s' }}>
+                    fontFamily:'inherit', transition:'all 0.2s'
+                  }}
+                  onClick={() => onStatus(b._id, 'cancelled')}>
                   <XCircle size={13} /> Cancel
                 </button>
               </>
