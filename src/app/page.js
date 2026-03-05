@@ -179,15 +179,12 @@ export default async function HomePage() {
                     className="spec-overlay"
                     style={{
                       position: 'absolute', inset: 0,
-                      background: 'linear-gradient(to top, rgba(4,59,59,0.85), rgba(4,59,59,0.3))',
                       display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
                       paddingBottom: 16, opacity: 0,
                       transition: 'opacity 0.4s ease',
                     }}
                   >
-                    <span style={{ color: '#15f5ba', fontWeight: 700, fontSize: 14 }}>
-                      View Profile →
-                    </span>
+                    
                   </div>
                 </div>
                 <div style={{ padding: '16px 18px' }}>

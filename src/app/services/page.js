@@ -111,34 +111,38 @@ function DeptCard({ dept, index, visible }) {
 }
 
 function FacilityCard({ service, index, visible }) {
-  const [hovered, setHovered] = useState(false);
   return (
     <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      className="fac-card"
       style={{
         background: '#fff',
-        borderRadius: 16,
+        borderRadius: 18,
         padding: '24px 20px',
-        borderWidth: 1, borderStyle: 'solid',
-        borderColor: hovered ? 'rgba(15,118,110,0.3)' : 'rgba(0,0,0,0.07)',
-        boxShadow: hovered ? '0 16px 40px rgba(15,118,110,0.13)' : '0 4px 14px rgba(0,0,0,0.06)',
-        fontSize: 15, fontWeight: 600,
-        color: '#1E293B', lineHeight: 1.5,
+        border: '1px solid rgba(0,0,0,0.07)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
         textAlign: 'center',
-        transition: `all 0.5s cubic-bezier(0.25,0.46,0.45,0.94) ${index * 0.06}s`,
+        cursor: 'default',
+        fontSize: 15,
+        fontWeight: 600,
+        color: '#1E293B',
+        lineHeight: 1.5,
+        transition: `all 0.35s cubic-bezier(0.25,0.46,0.45,0.94) ${index * 0.06}s`,
         opacity: visible ? 1 : 0,
-        transform: visible ? (hovered ? 'translateY(-6px)' : 'translateY(0)') : 'translateY(30px)',
+        transform: visible ? 'translateY(0)' : 'translateY(30px)',
       }}
     >
-      <div style={{
-        fontSize: '2rem', marginBottom: 12,
-        transform: hovered ? 'scale(1.2) rotate(5deg)' : 'none',
-        transition: 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)',
-        display: 'inline-block',
-      }}>
+      <div
+        className="fac-icon"
+        style={{
+          fontSize: '2rem',
+          marginBottom: 12,
+          transition: 'transform 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+          display: 'inline-block',
+        }}
+      >
         {service.icon}
       </div>
+
       <div>{service.name}</div>
     </div>
   );
@@ -316,8 +320,8 @@ export default function ServicesPage() {
             }}
           >
             {hospitalServices.map((service, i) => (
-              <FacilityCard key={i} service={service} index={i} visible={facVisible} />
-            ))}
+  <FacilityCard key={i} service={service} index={i} visible={true} />
+))}
           </div>
         </div>
       )}
@@ -443,6 +447,15 @@ export default function ServicesPage() {
         @keyframes pulse { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.3);opacity:0.7;} }
         @keyframes float { 0%,100%{transform:translateY(0px);} 50%{transform:translateY(-10px);} }
         @media(max-width:640px){ }
+        .fac-card:hover {
+  transform: translateY(-6px) !important;
+  box-shadow: 0 16px 40px rgba(15,118,110,0.15) !important;
+  border-color: rgba(15,118,110,0.25) !important;
+}
+
+.fac-card:hover .fac-icon {
+  transform: scale(1.2) rotate(8deg);
+}
       `}</style>
     </div>
   );
