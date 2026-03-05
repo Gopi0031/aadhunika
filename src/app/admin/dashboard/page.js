@@ -10,7 +10,6 @@ import HeroManager from '../components/HeroManager';
 import SpecialistsSection from '../components/SpecialistsSection';
 import BookingsSection from '../components/BookingsSection';
 import ContactsSection from '../components/ContactsSection';
-// --- NEW COMPONENTS ADDED ---
 import DoctorsManager from '../components/DoctorsManager';
 import CalendarManager from '../components/CalendarManager';
 
@@ -28,7 +27,7 @@ import {
   Image,
   Menu,
   X,
-  CalendarDays, // Added for Calendar Icon
+  CalendarDays,
 } from 'lucide-react';
 
 /* =======================
@@ -37,10 +36,10 @@ import {
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'bookings', label: 'Bookings', icon: BookOpen },
-  { id: 'calendar', label: 'Slot Management', icon: CalendarDays }, // NEW
-  { id: 'doctors', label: 'Doctors (New)', icon: Users }, // NEW
+  { id: 'calendar', label: 'Slot Management', icon: CalendarDays },
+  { id: 'doctors', label: 'Doctors (New)', icon: Users },
   { id: 'contacts', label: 'Contacts', icon: Phone },
-  { id: 'specialists', label: 'Specialists', icon: Users }, // KEPT EXISTING
+  { id: 'specialists', label: 'Specialists', icon: Users },
   { id: 'hero', label: 'Hero Section', icon: Image },
 ];
 
@@ -59,8 +58,10 @@ const StatCard = ({ icon, number, label, color }) => (
 
 export default function AdminDashboard() {
   const router = useRouter();
+
   const [activeSection, setActiveSection] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [stats, setStats] = useState({
     totalBookings: 0,
     pendingBookings: 0,
@@ -69,7 +70,21 @@ export default function AdminDashboard() {
     totalContacts: 0,
   });
 
-  // Fetch real stats from MongoDB
+  /* =======================
+     REVENUE STATE (NEW)
+  ======================= */
+  const [revenue, setRevenue] = useState({
+    todayRevenue: 0,
+    monthRevenue: 0,
+    totalRevenue: 0,
+    doctorWise: [],
+  });
+
+  const [revenueTab, setRevenueTab] = useState('today'); // today | month | total
+
+  const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
+
+  // Fetch real stats from MongoDB + Revenue
   useEffect(() => {
     const fetchStats = async () => {
       try {
@@ -95,6 +110,18 @@ export default function AdminDashboard() {
           confirmedBookings: bookings.filter((b) => b.status === 'confirmed').length,
           totalContacts: contacts.length,
         });
+
+        // ✅ Revenue fetch (Hospital + Doctor-wise)
+        const revRes = await fetch('/api/revenue?byDoctor=1');
+        if (revRes.ok) {
+          const rev = await revRes.json();
+          setRevenue({
+            todayRevenue: rev.todayRevenue || 0,
+            monthRevenue: rev.monthRevenue || 0,
+            totalRevenue: rev.totalRevenue || 0,
+            doctorWise: rev.doctorWise || [],
+          });
+        }
       } catch (error) {
         console.error('Failed to fetch stats:', error);
       }
@@ -121,6 +148,13 @@ export default function AdminDashboard() {
     return item ? item.label : 'Dashboard';
   };
 
+  const currentRevenueValue =
+    revenueTab === 'today'
+      ? revenue.todayRevenue
+      : revenueTab === 'month'
+      ? revenue.monthRevenue
+      : revenue.totalRevenue;
+
   return (
     <div className="admin-dashboard">
       {/* Mobile overlay */}
@@ -133,7 +167,6 @@ export default function AdminDashboard() {
 
       {/* ===== SIDEBAR ===== */}
       <aside className={`admin-sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}>
-        {/* Sidebar Header */}
         <div className="sidebar-header">
           <div className="sidebar-logo">
             <span className="sidebar-logo-icon">🏥</span>
@@ -150,7 +183,6 @@ export default function AdminDashboard() {
           </button>
         </div>
 
-        {/* Sidebar Nav */}
         <nav className="sidebar-nav">
           <p className="sidebar-nav-label">MAIN MENU</p>
 
@@ -172,7 +204,6 @@ export default function AdminDashboard() {
           })}
         </nav>
 
-        {/* Sidebar Footer */}
         <div className="sidebar-footer">
           <button className="sidebar-logout-btn" onClick={handleLogout}>
             <LogOut size={20} />
@@ -183,7 +214,6 @@ export default function AdminDashboard() {
 
       {/* ===== MAIN CONTENT ===== */}
       <main className="admin-main">
-        {/* Top Bar */}
         <header className="admin-topbar">
           <div className="topbar-left">
             <button
@@ -194,9 +224,7 @@ export default function AdminDashboard() {
             </button>
             <div className="topbar-title">
               <h1>{getSectionTitle()}</h1>
-              <p className="topbar-breadcrumb">
-                Admin / {getSectionTitle()}
-              </p>
+              <p className="topbar-breadcrumb">Admin / {getSectionTitle()}</p>
             </div>
           </div>
           <div className="topbar-right">
@@ -207,7 +235,6 @@ export default function AdminDashboard() {
           </div>
         </header>
 
-        {/* Content Area */}
         <div className="admin-content">
           {/* DASHBOARD */}
           {activeSection === 'dashboard' && (
@@ -254,34 +281,158 @@ export default function AdminDashboard() {
               <div className="dash-quick-actions">
                 <h3>Quick Actions</h3>
                 <div className="dash-quick-grid">
-                  <button
-                    className="dash-quick-btn"
-                    onClick={() => setActiveSection('bookings')}
-                  >
+                  <button className="dash-quick-btn" onClick={() => setActiveSection('bookings')}>
                     <BookOpen size={20} />
                     <span>View Bookings</span>
                   </button>
-                  <button
-                    className="dash-quick-btn"
-                    onClick={() => setActiveSection('calendar')}
-                  >
+                  <button className="dash-quick-btn" onClick={() => setActiveSection('calendar')}>
                     <CalendarDays size={20} />
                     <span>Manage Slots</span>
                   </button>
-                  <button
-                    className="dash-quick-btn"
-                    onClick={() => setActiveSection('doctors')}
-                  >
+                  <button className="dash-quick-btn" onClick={() => setActiveSection('doctors')}>
                     <Users size={20} />
                     <span>Manage Doctors</span>
                   </button>
-                  <button
-                    className="dash-quick-btn"
-                    onClick={() => setActiveSection('contacts')}
-                  >
+                  <button className="dash-quick-btn" onClick={() => setActiveSection('contacts')}>
                     <Phone size={20} />
                     <span>View Contacts</span>
                   </button>
+                </div>
+              </div>
+
+              {/* =======================
+                  REVENUE (NEW)
+              ======================= */}
+              <div className="dash-quick-actions">
+                <h3>Revenue</h3>
+
+                <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 }}>
+                  {[
+                    { id: 'today', label: 'Today' },
+                    { id: 'month', label: 'This Month' },
+                    { id: 'total', label: 'Total' },
+                  ].map((t) => {
+                    const active = revenueTab === t.id;
+                    return (
+                      <button
+                        key={t.id}
+                        className="dash-quick-btn"
+                        style={{
+                          maxWidth: 170,
+                          background: active ? '#0F766E' : '#F8FAFC',
+                          borderColor: active ? '#0F766E' : '#E2E8F0',
+                          color: active ? '#fff' : '#475569',
+                        }}
+                        onClick={() => setRevenueTab(t.id)}
+                      >
+                        <span style={{ fontWeight: 800 }}>{t.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="dash-stats-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                  <StatCard
+                    icon={<TrendingUp size={24} />}
+                    number={formatINR(currentRevenueValue)}
+                    label={
+                      revenueTab === 'today'
+                        ? 'Today Revenue'
+                        : revenueTab === 'month'
+                        ? 'This Month Revenue'
+                        : 'Total Revenue'
+                    }
+                    color="green"
+                  />
+                  <StatCard
+                    icon={<Users size={24} />}
+                    number={revenue.doctorWise?.length || 0}
+                    label="Doctors Contributing"
+                    color="purple"
+                  />
+                  <StatCard
+                    icon={<BookOpen size={24} />}
+                    number="PAID"
+                    label="Revenue from Paid Bookings"
+                    color="blue"
+                  />
+                </div>
+
+                {/* Doctor-wise Revenue List */}
+                <div
+                  style={{
+                    marginTop: 18,
+                    background: '#fff',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: 14,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '14px 18px',
+                      background: '#F8FAFC',
+                      borderBottom: '1px solid #F1F5F9',
+                      fontWeight: 800,
+                      color: '#0F172A',
+                    }}
+                  >
+                    Doctor-wise Revenue ({revenueTab})
+                  </div>
+
+                  <div style={{ padding: 16, display: 'grid', gap: 10 }}>
+                    {(revenue.doctorWise || []).slice(0, 10).map((d) => {
+                      const val =
+                        revenueTab === 'today'
+                          ? d.todayRevenue
+                          : revenueTab === 'month'
+                          ? d.monthRevenue
+                          : d.totalRevenue;
+
+                      return (
+                        <div
+                          key={d.doctorId}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 12,
+                            padding: '12px 14px',
+                            border: '1px solid #E2E8F0',
+                            borderRadius: 12,
+                            background: '#fff',
+                          }}
+                        >
+                          <div style={{ minWidth: 0 }}>
+                            <div
+                              style={{
+                                fontWeight: 800,
+                                color: '#0F172A',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {d.doctorName || 'Doctor'}
+                            </div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#64748B' }}>
+                              {d.dept || '—'}
+                            </div>
+                          </div>
+
+                          <div style={{ fontWeight: 900, color: '#0F766E' }}>
+                            {formatINR(val)}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {(revenue.doctorWise || []).length === 0 && (
+                      <div style={{ padding: 16, color: '#64748B', fontWeight: 700 }}>
+                        No paid revenue yet.
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -290,16 +441,16 @@ export default function AdminDashboard() {
           {/* BOOKINGS */}
           {activeSection === 'bookings' && <BookingsSection />}
 
-          {/* NEW: CALENDAR MANAGER */}
+          {/* CALENDAR MANAGER */}
           {activeSection === 'calendar' && <CalendarManager />}
 
-          {/* NEW: DOCTORS MANAGER */}
+          {/* DOCTORS MANAGER */}
           {activeSection === 'doctors' && <DoctorsManager />}
 
           {/* CONTACTS */}
           {activeSection === 'contacts' && <ContactsSection />}
 
-          {/* SPECIALISTS (Existing) */}
+          {/* SPECIALISTS */}
           {activeSection === 'specialists' && <SpecialistsSection />}
 
           {/* HERO SECTION */}
