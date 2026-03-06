@@ -129,7 +129,7 @@ export default function Header() {
       <header className="header-container">
         <Link href="/" className="header-logo">
           <img src="/Aadhunika.png" alt="Aadhunika Hospital" className="header-logo-img" />
-          <span className="header-logo-text">Aadhunika Hospital</span>
+          <span className="header-logo-text">Aadhunika Multispeciality  Hospital</span>
         </Link>
 
         <button

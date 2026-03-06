@@ -17,41 +17,66 @@ function HeroContent() {
       maxWidth: 820, margin: '0 auto',
       width: '100%',
     }}>
+
+      {/* ── HEADLINE ── */}
       <h1 style={{
         fontSize: 'clamp(30px, 6vw, 64px)',
-        fontWeight: 800, color: '#fff',
-        margin: '0 0 16px', lineHeight: 1.15,
-        textShadow: '0 2px 20px rgba(0,0,0,0.3)',
+        fontWeight: 900,
+        color: '#fff',
+        margin: '0 0 16px',
+        lineHeight: 1.1,
+        letterSpacing: '-1px',
+        textShadow: '0 4px 32px rgba(0,0,0,0.45)',
         fontFamily: "'Segoe UI', sans-serif",
       }}>
         Aadhunika{' '}
         <span style={{
-          background: 'linear-gradient(135deg, #00f7ff, #15f5ba)',
+          background: 'linear-gradient(135deg, #00f7ff 0%, #15f5ba 55%, #05c98a 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
+          fontStyle: 'italic',
         }}>
           Multispeciality
         </span>{' '}
-        Hospital
+        <span style={{
+          fontWeight: 300,
+          letterSpacing: '4px',
+          fontSize: 'clamp(24px, 4.5vw, 52px)',
+          color: 'rgba(255,255,255,0.75)',
+          textTransform: 'uppercase',
+          fontStyle: 'normal',
+        }}>
+          Hospital
+        </span>
       </h1>
 
+      {/* ── TAGLINE ── */}
       <p style={{
-        fontSize: 'clamp(16px, 2.5vw, 22px)',
-        color: 'rgba(255,255,255,0.92)',
-        margin: '0 0 10px', fontWeight: 500,
+        fontSize: 'clamp(15px, 2.2vw, 20px)',
+        color: 'rgba(255,255,255,0.88)',
+        margin: '0 0 8px',
+        fontWeight: 500,
+        letterSpacing: '0.3px',
+        fontFamily: "'Segoe UI', sans-serif",
       }}>
         Your Trusted Partner in Health &amp; Wellness
       </p>
 
+      {/* ── SUB TEXT ── */}
       <p style={{
-        fontSize: 'clamp(13px, 1.8vw, 16px)',
-        color: 'rgba(255,255,255,0.72)',
-        margin: '0 0 32px', lineHeight: 1.6,
+        fontSize: 'clamp(12px, 1.6vw, 15px)',
+        color: 'rgba(255,255,255,0.5)',
+        margin: '0 0 32px',
+        lineHeight: 1.7,
+        fontWeight: 400,
+        letterSpacing: '0.4px',
+        fontFamily: "'Segoe UI', sans-serif",
       }}>
         Advanced medical care with compassion — 24/7 emergency services available
       </p>
 
+      {/* ── BUTTONS (unchanged) ── */}
       <div style={{
         display: 'flex', gap: 14,
         justifyContent: 'center', flexWrap: 'wrap',
@@ -103,6 +128,7 @@ function HeroContent() {
           📅 Book Appointment
         </Link>
       </div>
+
     </div>
   );
 }
@@ -116,7 +142,7 @@ export default function HeroSection({ heroData }) {
   useEffect(() => {
     const header = document.querySelector('header');
     if (header) setHeaderHeight(header.offsetHeight);
-    
+
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) { setIsVisible(true); observer.disconnect(); } },
       { threshold: 0.05 }
@@ -133,14 +159,13 @@ export default function HeroSection({ heroData }) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Set as a flex container so we can divide space perfectly on mobile
   const sectionBase = {
     position: 'relative',
     width: '100%',
     height: `calc(100vh - ${headerHeight}px)`,
-    minHeight: 600, // Safe minimum height so buttons never get cut off
+    minHeight: 600,
     display: 'flex',
-    flexDirection: 'column', 
+    flexDirection: 'column',
     background: '#043b3b',
     overflow: 'hidden',
     fontFamily: "'Segoe UI', sans-serif",
@@ -151,86 +176,63 @@ export default function HeroSection({ heroData }) {
   return (
     <>
       <style>{`
-        /* --- DESKTOP LAYOUT --- */
         .hero-swiper-container {
           position: absolute;
           top: 0; left: 0;
           width: 100%; height: 100%;
           z-index: 1;
         }
-
         .hero-text-wrapper {
           position: relative;
           z-index: 10;
-          flex: 1; /* Takes full height on desktop */
+          flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
           width: 100%;
         }
-
         .hero-swiper-full {
           width: 100% !important;
           height: 100% !important;
         }
-        
         .hero-swiper-full .swiper-wrapper,
         .hero-swiper-full .swiper-slide {
           height: 100% !important; width: 100% !important;
         }
-
         .hero-parallax-image {
           position: absolute !important;
           left: 0 !important; top: -10% !important;
           width: 100% !important; height: 120% !important;
-          object-fit: cover !important; 
+          object-fit: cover !important;
           object-position: center center !important;
           will-change: transform;
           transition: transform 0.1s ease-out;
           z-index: 1;
         }
-
         .hero-overlay {
-          position: absolute; inset: 0; zIndex: 5;
+          position: absolute; inset: 0; z-index: 5;
           background: linear-gradient(135deg, rgba(4,59,59,0.7) 0%, rgba(15,118,110,0.5) 100%);
           pointer-events: none;
         }
-
         .swiper-pagination-bullet { background: rgba(255,255,255,0.5) !important; width: 10px !important; height: 10px !important; }
         .swiper-pagination-bullet-active { background: #15f5ba !important; width: 28px !important; border-radius: 5px !important; }
 
-
-        /* --- 📱 MOBILE LAYOUT (SPLIT SCREEN FIX) --- */
         @media (max-width: 768px) {
-          
-          /* 1. Image gets locked to the top, exactly in a 16:9 ratio size */
           .hero-swiper-container {
-            position: relative; /* Stacks naturally above the text */
-            height: 56.25vw !important; /* Perfect 16:9 ratio based on phone width */
+            position: relative;
+            height: 56.25vw !important;
             flex-shrink: 0;
           }
-
-          /* 2. Text takes up all the remaining space below the image */
-          .hero-text-wrapper {
-            flex: 1; /* Automatically stretches to fill the bottom area */
-          }
-
-          /* 3. Disable parallax so image fits 100% perfectly without empty gaps */
+          .hero-text-wrapper { flex: 1; }
           .hero-parallax-image {
             top: 0 !important;
             height: 100% !important;
-            transform: none !important; 
+            transform: none !important;
           }
-          
-          /* 4. Smooth blend at the bottom edge of the image into the dark teal */
           .hero-overlay {
             background: linear-gradient(180deg, transparent 75%, #043b3b 102%) !important;
           }
-
-          /* Keep pagination dots inside the image area */
-          .swiper-pagination {
-            bottom: 10px !important;
-          }
+          .swiper-pagination { bottom: 10px !important; }
         }
       `}</style>
 
@@ -242,7 +244,7 @@ export default function HeroSection({ heroData }) {
         </section>
       ) : (
         <section ref={sectionRef} style={sectionBase}>
-          
+
           {/* 🖼️ IMAGE AREA */}
           <div className="hero-swiper-container">
             <Swiper

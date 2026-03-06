@@ -6,6 +6,8 @@ import HoverLink from '@/components/ui/HoverLink';
 import { connectDB } from '@/lib/mongodb';
 import HeroImage from '@/models/HeroImage';
 import Specialist from '@/models/Specialist';
+import SpecialistsCarousel from '@/components/SpecialistsCarousel';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -108,104 +110,12 @@ export default async function HomePage() {
       <ScrollAnimations />
       <HeroSection heroData={heroData} />
 
-      {/* ===== SPECIALISTS ===== */}
-      <section style={{
-        padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,40px)',
-        background: '#FFFFF0',
-        fontFamily: "'Segoe UI', sans-serif",
-      }}>
-        <div className="reveal" style={{ textAlign: 'center', marginBottom: 48 }}>
-          <span style={{
-            display: 'inline-block',
-            background: 'linear-gradient(135deg,rgba(15,118,110,0.1),rgba(5,150,105,0.1))',
-            color: '#0F766E', padding: '5px 18px', borderRadius: 50,
-            fontSize: 11, fontWeight: 700, letterSpacing: '1.5px',
-            textTransform: 'uppercase', border: '1px solid rgba(15,118,110,0.2)',
-            marginBottom: 12,
-          }}>
-            Meet Our Experts
-          </span>
-          <h2 style={{
-            fontSize: 'clamp(26px,4vw,40px)', fontWeight: 800,
-            color: '#0F766E', margin: '0 0 12px',
-          }}>
-            Our Specialists
-          </h2>
-          <div style={{
-            width: 60, height: 4,
-            background: 'linear-gradient(90deg,#0F766E,#15f5ba)',
-            borderRadius: 2, margin: '0 auto',
-          }} />
-        </div>
+     <SpecialistsCarousel specialists={specialists} />
 
-        <div
-          className="spec-grid specialists"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-            gap: 24, maxWidth: 1200, margin: '0 auto',
-          }}
-        >
-          {specialists.length === 0 ? (
-            <p style={{
-              textAlign: 'center', color: '#6B7280',
-              gridColumn: '1/-1', fontSize: 16, padding: '40px 0',
-            }}>
-              No specialists available at the moment.
-            </p>
-          ) : (
-            specialists.map((s, i) => (
-              <div
-                key={s._id}
-                className={`spec-card-wrap reveal delay-${Math.min(i + 1, 6)}`}
-                style={{
-                  background: '#fff', borderRadius: 20, overflow: 'hidden',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.07)',
-                  border: '1px solid rgba(0,0,0,0.07)',
-                  cursor: 'pointer',
-                }}
-              >
-                <div style={{ position: 'relative', overflow: 'hidden', height: 220 }}>
-                  <img
-                    src={s.image || '/placeholder-doctor.jpg'}
-                    alt={s.name}
-                    style={{
-                      width: '100%', height: '100%', objectFit: 'cover',
-                      display: 'block',
-                      transition: 'transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94)',
-                    }}
-                  />
-                  <div
-                    className="spec-overlay"
-                    style={{
-                      position: 'absolute', inset: 0,
-                      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-                      paddingBottom: 16, opacity: 0,
-                      transition: 'opacity 0.4s ease',
-                    }}
-                  >
-                    
-                  </div>
-                </div>
-                <div style={{ padding: '16px 18px' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 800, color: '#0F766E', margin: '0 0 6px' }}>
-                    {s.name}
-                  </h3>
-                  {s.speciality && (
-                    <p style={{ fontSize: 13, color: '#6B7280', margin: 0, fontWeight: 500 }}>
-                      {s.speciality}
-                    </p>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </section>
 
       {/* ===== FACILITIES ===== */}
       <section style={{
-        padding: 'clamp(60px,8vw,100px) clamp(16px,4vw,40px)',
+        padding: 'clamp(10px,8vw,2px) clamp(16px,4vw,20px)',
         background: 'linear-gradient(135deg, #F0FDF4, #ECFDF5)',
         fontFamily: "'Segoe UI', sans-serif",
       }}>
