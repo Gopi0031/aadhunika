@@ -1,6 +1,6 @@
 // components/Footer.jsx
 import Link from 'next/link';
-import { FaFacebookF, FaInstagram, FaTwitter, FaLinkedinIn } from 'react-icons/fa';
+import { FaFacebookF, FaInstagram, FaYoutube } from 'react-icons/fa';
 
 const navLinks = [
   { href: '/',         label: 'Home'     },
@@ -11,11 +11,29 @@ const navLinks = [
 ];
 
 const socialLinks = [
-  { icon: <FaFacebookF />,  href: '#', label: 'Facebook'  },
-  { icon: <FaInstagram />,  href: '#', label: 'Instagram' },
-  { icon: <FaTwitter />,    href: '#', label: 'Twitter'   },
-  { icon: <FaLinkedinIn />, href: '#', label: 'LinkedIn'  },
+  {
+    icon: <FaFacebookF />,
+    href: 'https://www.facebook.com/people/Aadhunika-Group-India/61568169011116/',
+    label: 'Facebook',
+  },
+  {
+    icon: <FaInstagram />,
+    href: 'https://www.instagram.com/aadhunikamultispecialtyhospitl/',
+    label: 'Instagram',
+  },
+  {
+    icon: <FaYoutube />,
+    href: 'https://www.youtube.com/@Aadhunikamultispeciality',
+    label: 'YouTube',
+  },
+  {
+    // ✅ JustDial — text badge since no icon available
+    icon: <span style={{ fontSize: 9, fontWeight: 900, letterSpacing: '-0.5px' }}>JD</span>,
+    href: 'https://www.justdial.com/Guntur/AADHUNIKA-MULTISPECIALITY-HOSPITAL-Beside-Kothapeta-Sivalayam-Kotha-Peta/9999PX863-X863-210402182220-D1I4_BZDET?auto=1&trkid=9966308896&term=adhunika',
+    label: 'JustDial',
+  },
 ];
+
 
 export default function Footer() {
   return (
@@ -28,7 +46,6 @@ export default function Footer() {
       `}</style>
 
       <footer style={{
-        /* ✅ matches header gradient exactly */
         background: 'linear-gradient(135deg, #00f7ff 0%, #15f5ba 100%)',
         color: '#043b3b',
         fontFamily: "'Segoe UI', sans-serif",
@@ -168,6 +185,32 @@ export default function Footer() {
               Stay connected for health tips, news, and updates from our hospital.
             </p>
 
+            {/* Social links repeated large in Follow Us col */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+              {socialLinks.map((s) => (
+                <a key={s.label} href={s.href} aria-label={s.label}
+                  target="_blank" rel="noopener noreferrer"
+                  className="footer-contact-link"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    fontSize: 14, color: 'rgba(4,59,59,0.85)',
+                    textDecoration: 'none', fontWeight: 600,
+                    transition: 'color 0.25s ease',
+                  }}>
+                  <span style={{
+                    width: 32, height: 32, borderRadius: '50%',
+                    background: 'rgba(4,59,59,0.12)',
+                    border: '1px solid rgba(4,59,59,0.2)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 14, flexShrink: 0,
+                  }}>
+                    {s.icon}
+                  </span>
+                  {s.label}
+                </a>
+              ))}
+            </div>
+
             {/* Emergency */}
             <div style={{
               background: 'rgba(4,59,59,0.08)', border: '1px solid rgba(4,59,59,0.15)',
@@ -218,22 +261,18 @@ export default function Footer() {
             © {new Date().getFullYear()} Aadhunika Multispeciality Hospital. All rights reserved.
           </p>
           <a
-  href="https://www.ramakalpasolutions.in"
-  target="_blank"
-  rel="noopener noreferrer"
-  style={{
-    fontSize: 13,
-    color: '#6B0000',
-    margin: 0,
-    fontWeight: 700,
-    textDecoration: 'none',
-    cursor: 'pointer',
-  }}
->
-  Powered by Ramakalpa Solutions
-</a>
-
+            href="https://www.ramakalpasolutions.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontSize: 13, color: '#6B0000', margin: 0,
+              fontWeight: 700, textDecoration: 'none', cursor: 'pointer',
+            }}
+          >
+            Powered by Ramakalpa Solutions
+          </a>
         </div>
+
       </footer>
     </>
   );

@@ -115,7 +115,7 @@ export default async function HomePage() {
 
       {/* ===== FACILITIES ===== */}
       <section style={{
-        padding: 'clamp(10px,8vw,2px) clamp(16px,4vw,20px)',
+        padding: 'clamp(2px,8vw,2px) clamp(16px,4vw,20px)',
         background: 'linear-gradient(135deg, #F0FDF4, #ECFDF5)',
         fontFamily: "'Segoe UI', sans-serif",
       }}>
