@@ -4,7 +4,6 @@
 import './dashboard.css';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
 /* ===== ADMIN COMPONENTS ===== */
 import HeroManager from '../components/HeroManager';
 import SpecialistsSection from '../components/SpecialistsSection';
@@ -84,6 +83,14 @@ export default function AdminDashboard() {
 
   const formatINR = (n) => `₹${Number(n || 0).toLocaleString('en-IN')}`;
 
+   // ✅ PASTE HERE — before the fetch useEffect
+  useEffect(() => {
+    const isAuth = sessionStorage.getItem('adminAuth');
+    if (!isAuth) {
+      router.replace('/admin/login');
+    }
+  }, []);
+
   // Fetch real stats from MongoDB + Revenue
   useEffect(() => {
     const fetchStats = async () => {
@@ -137,10 +144,13 @@ export default function AdminDashboard() {
   };
 
   // Logout
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/admin/login');
-  };
+const handleLogout = async () => {
+  // ✅ Clear auth flag
+  sessionStorage.removeItem('adminAuth');
+  await fetch('/api/auth/logout', { method: 'POST' });
+  router.push('/admin/login');
+};
+
 
   // Get section title
   const getSectionTitle = () => {

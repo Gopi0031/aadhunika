@@ -119,16 +119,21 @@ export default function UnifiedLogin() {
   const switchRole    = (r) => { setRole(r); setStep('login'); };
   const triggerShake  = () => { setShake(true); setTimeout(() => setShake(false), 400); };
 
-  const handleAdminLogin = (e) => {
-    e.preventDefault(); setLoading(true);
-    if (adminEmail === 'admin@gmail.com' && adminPass === 'admin123') {
-      toast.success('Welcome back, Admin! 👋');
-      setTimeout(() => router.push('/admin/dashboard'), 900);
-    } else {
-      toast.error('Invalid credentials');
-      setLoading(false); triggerShake();
-    }
-  };
+ const handleAdminLogin = (e) => {
+  e.preventDefault();
+  setLoading(true);
+  if (adminEmail === 'admin@gmail.com' && adminPass === 'admin123') {
+    // ✅ Set a simple auth flag in sessionStorage
+    sessionStorage.setItem('adminAuth', 'true');
+    toast.success('Welcome back, Admin! 👋');
+    setTimeout(() => router.push('/admin/dashboard'), 900);
+  } else {
+    toast.error('Invalid credentials');
+    setLoading(false);
+    triggerShake();
+  }
+};
+
 
   const handleDoctorLogin = async (e) => {
     e.preventDefault();
