@@ -13,6 +13,10 @@ export default function SpecialistsCarousel({ specialists = [] }) {
   const [canLeft, setCanLeft]       = useState(false);
   const [canRight, setCanRight]     = useState(true);
 
+  // ✅ auto-scroll refs
+  // const autoRef     = useRef(null);
+  const pauseRef    = useRef(false);
+
   const filters = ['All', ...Array.from(new Set(specialists.map(s => s.specialization).filter(Boolean)))];
   const filtered = activeFilter === 'All'
     ? specialists
@@ -33,15 +37,39 @@ export default function SpecialistsCarousel({ specialists = [] }) {
     setCanLeft(el.scrollLeft > 4);
     setCanRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 4);
   };
-  useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    el.addEventListener('scroll', updateArrows, { passive: true });
-    updateArrows();
-    return () => el.removeEventListener('scroll', updateArrows);
-  }, [filtered]);
+  // ✅ AUTO-SCROLL ENGINE — no flicker loop
+useEffect(() => {
+  const el = trackRef.current;
+  if (!el) return;
+
+  let animId;
+
+  const step = () => {
+    if (!pauseRef.current && el) {
+      // reached the end — instantly reset to 0 (no smooth, no flicker)
+      if (el.scrollLeft >= el.scrollWidth - el.clientWidth - 1) {
+        el.scrollLeft = 0;
+      } else {
+        el.scrollLeft += 0.8;   // ← speed: lower = slower, raise to taste
+      }
+    }
+    animId = requestAnimationFrame(step);
+  };
+
+  animId = requestAnimationFrame(step);
+  return () => cancelAnimationFrame(animId);
+}, [filtered]);
+
+
+  
+
+
+  // ✅ pause on hover / touch
+  const pauseAuto  = () => { pauseRef.current = true;  };
+  const resumeAuto = () => { pauseRef.current = false; };
 
   const onMouseDown = (e) => {
+    pauseAuto();
     setIsDragging(true);
     setStartX(e.pageX - (trackRef.current?.offsetLeft || 0));
     setScrollLeft(trackRef.current?.scrollLeft || 0);
@@ -52,11 +80,17 @@ export default function SpecialistsCarousel({ specialists = [] }) {
     const x = e.pageX - (trackRef.current.offsetLeft || 0);
     trackRef.current.scrollLeft = scrollLeft - (x - startX);
   };
-  const onMouseUp = () => setIsDragging(false);
+  const onMouseUp = () => {
+    setIsDragging(false);
+    // resume after 2s so user can read the card they stopped on
+    setTimeout(resumeAuto, 2000);
+  };
 
   const scrollBy = (dir) => {
     if (!trackRef.current) return;
-    trackRef.current.scrollBy({ left: dir * 500, behavior: 'smooth' });
+    pauseAuto();
+    trackRef.current.scrollBy({ left: dir * 260, behavior: 'smooth' });
+    setTimeout(resumeAuto, 3000);
   };
 
   const splitName = (name = '') => {
@@ -156,20 +190,24 @@ export default function SpecialistsCarousel({ specialists = [] }) {
         }
         .sc-fb:hover { border-color: #0F766E; color: #0F766E; background: rgba(15,118,110,0.04); }
         .sc-fb.active { background: #0F766E; border-color: #0F766E; color: #fff; }
-        .sc-outer {
-          position: relative;
-          margin-top: clamp(24px,3.5vw,44px);
-        }
-        .sc-track {
-          display: flex;
-          gap: 16px;
-          overflow-x: auto;
-          scrollbar-width: none;
-          cursor: grab;
-          padding: 10px 4px 28px;
-          -webkit-overflow-scrolling: touch;
-          scroll-snap-type: x mandatory;
-        }
+       .sc-outer {
+  position: relative;
+  margin-top: clamp(24px,3.5vw,44px);
+
+  /* ✅ bust out of .sc-inner's padding */
+  width: 100vw;
+  margin-left: calc(-1 * clamp(16px,5vw,64px));
+}
+       .sc-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  cursor: grab;
+  padding: 10px clamp(16px,5vw,64px) 28px;   /* ← side padding matches sc-inner */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: auto;
+}
         .sc-track::-webkit-scrollbar { display: none; }
         .sc-track.grabbing { cursor: grabbing; }
         .sc-card {
@@ -187,7 +225,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           box-shadow: 0 2px 8px rgba(0,0,0,0.07);
           opacity: 0;
           transform: translateY(28px);
-          scroll-snap-align: start;
           transition:
             opacity 0.6s ease,
             transform 0.6s cubic-bezier(0.22,0.61,0.36,1),
@@ -225,7 +262,7 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           object-position: top center;
           display: block;
           pointer-events: none;
-          transition: transform 0.55s cubic-bezier(0.22,0.61,0.36,1);
+          transition: transform 1.1s cubic-bezier(0.22,0.61,0.36,1);
         }
         .sc-card:hover .sc-img { transform: scale(1.05); }
         .sc-img-wrap::after {
@@ -290,7 +327,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           white-space: nowrap;
           font-family: 'Inter', sans-serif;
           transition: background 0.3s ease, color 0.3s ease;
-          /* keeps tag baseline-aligned inside the flex name row */
           align-self: center;
           line-height: 1.4;
         }
@@ -474,48 +510,52 @@ export default function SpecialistsCarousel({ specialists = [] }) {
                   onMouseDown={onMouseDown}
                   onMouseMove={onMouseMove}
                   onMouseUp={onMouseUp}
-                  onMouseLeave={onMouseUp}
+                  onMouseEnter={pauseAuto}
+                  onMouseLeave={() => { onMouseUp(); setTimeout(resumeAuto, 1500); }}
+                  onTouchStart={pauseAuto}
+                  onTouchEnd={() => setTimeout(resumeAuto, 2000)}
                 >
-                  {filtered.map((s, i) => {
-                    const { first, last } = splitName(s.name);
-                    return (
-                      <div
-                        key={s._id || i}
-                        className={`sc-card${visible ? ' vis' : ''}`}
-                        onMouseEnter={() => setHovered(i)}
-                        onMouseLeave={() => setHovered(null)}
-                      >
-                        <div className="sc-img-wrap">
-                          {s.image ? (
-                            <img className="sc-img" src={s.image} alt={s.name} draggable={false} />
-                          ) : (
-                            <div className="sc-placeholder">🩺</div>
-                          )}
-                        </div>
-
-                        <div className="sc-body">
-                          <p className="sc-name-first">{first}</p>
-                          <p className="sc-name-last">
-                            {last || first}
-                            {s.qualification && (
-                              <span className="sc-qual">{s.qualification}</span>
-                            )}
-                          </p>
-                          <div className="sc-sep" />
-                          {s.specialization && (
-                            <div className="sc-spec">
-                              <span className="sc-spec-dot" />
-                              {s.specialization}
-                            </div>
-                          )}
-                          {s.description && (
-                            <p className="sc-desc">{s.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+          {/* ✅ Render list TWICE — second copy makes seamless infinite loop */}
+          {[...filtered, ...filtered].map((s, i) => {
+            const { first, last } = splitName(s.name);
+            return (
+              <div
+                key={`${s._id || i}-${i}`}
+                className={`sc-card${visible ? ' vis' : ''}`}
+                onMouseEnter={() => setHovered(i)}
+                onMouseLeave={() => setHovered(null)}
+              >
+                <div className="sc-img-wrap">
+                  {s.image ? (
+                    <img className="sc-img" src={s.image} alt={s.name} draggable={false} />
+                  ) : (
+                    <div className="sc-placeholder">🩺</div>
+                  )}
                 </div>
+
+                <div className="sc-body">
+                  <p className="sc-name-first">{first}</p>
+                  <p className="sc-name-last">
+                    {last || first}
+                    {s.qualification && (
+                      <span className="sc-qual">{s.qualification}</span>
+                    )}
+                  </p>
+                  <div className="sc-sep" />
+                  {s.specialization && (
+                    <div className="sc-spec">
+                      <span className="sc-spec-dot" />
+                      {s.specialization}
+                    </div>
+                  )}
+                  {s.description && (
+                              <p className="sc-desc">{s.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
               </div>
 
               <button
@@ -526,14 +566,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
               >›</button>
             </div>
           )}
-
-          <div className={`sc-foot${visible ? ' vis' : ''}`}>
-            <span className="sc-foot-label">Specialist team</span>
-            <span className="sc-foot-count">
-              {filtered.length}&nbsp;/&nbsp;{specialists.length} specialists
-            </span>
-          </div>
-
         </div>
       </section>
     </>

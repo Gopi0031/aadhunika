@@ -22,10 +22,10 @@ function HeroContent() {
       <h1 style={{
         fontSize: 'clamp(30px, 6vw, 64px)',
         fontWeight: 900,
-        color: '#fff',
+        color: '#ffffff',
         margin: '0 0 16px',
         lineHeight: 1.1,
-        letterSpacing: '-1px',
+        letterSpacing: '1.9px',
         textShadow: '0 4px 32px rgba(0,0,0,0.45)',
         fontFamily: "'Segoe UI', sans-serif",
       }}>
