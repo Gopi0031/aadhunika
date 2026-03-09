@@ -1,9 +1,12 @@
+// src/models/Specialist.js
 import mongoose from 'mongoose';
 
 const SpecialistSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    image: { type: String, required: true },
+    name:           { type: String, required: true },
+    specialization: { type: String, default: '' },
+    description:    { type: String, default: '' },
+    image:          { type: String, required: true },
   },
   { timestamps: true }
 );
