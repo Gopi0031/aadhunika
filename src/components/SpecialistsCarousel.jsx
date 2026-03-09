@@ -78,7 +78,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           font-family: 'Inter', sans-serif;
           position: relative;
         }
-
         .sc-section::before {
           content: '';
           position: absolute;
@@ -87,14 +86,12 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           background-size: 28px 28px;
           pointer-events: none;
         }
-
         .sc-inner {
           max-width: 1280px;
           margin: 0 auto;
           padding: 0 clamp(16px,5vw,64px);
           position: relative;
         }
-
         .sc-header {
           text-align: center;
           margin-bottom: clamp(28px,4vw,48px);
@@ -103,7 +100,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: opacity 0.9s ease, transform 0.9s ease;
         }
         .sc-header.vis { opacity: 1; transform: translateY(0); }
-
         .sc-badge {
           display: inline-block;
           background: transparent;
@@ -118,7 +114,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           margin-bottom: 14px;
           font-family: 'Inter', sans-serif;
         }
-
         .sc-title {
           font-size: clamp(22px,3.5vw,38px);
           font-weight: 700;
@@ -127,7 +122,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           font-family: 'Playfair Display', serif;
           letter-spacing: -0.5px;
         }
-
         .sc-rule {
           width: 48px;
           height: 3px;
@@ -135,7 +129,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           border-radius: 2px;
           margin: 0 auto;
         }
-
         .sc-filters {
           display: flex;
           gap: 8px;
@@ -147,7 +140,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: opacity 0.7s ease 0.25s, transform 0.7s ease 0.25s;
         }
         .sc-filters.vis { opacity: 1; transform: translateY(0); }
-
         .sc-fb {
           padding: 6px 16px;
           border-radius: 4px;
@@ -162,22 +154,12 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: all 0.2s ease;
           white-space: nowrap;
         }
-        .sc-fb:hover {
-          border-color: #0F766E;
-          color: #0F766E;
-          background: rgba(15,118,110,0.04);
-        }
-        .sc-fb.active {
-          background: #0F766E;
-          border-color: #0F766E;
-          color: #fff;
-        }
-
+        .sc-fb:hover { border-color: #0F766E; color: #0F766E; background: rgba(15,118,110,0.04); }
+        .sc-fb.active { background: #0F766E; border-color: #0F766E; color: #fff; }
         .sc-outer {
           position: relative;
           margin-top: clamp(24px,3.5vw,44px);
         }
-
         .sc-track {
           display: flex;
           gap: 16px;
@@ -186,13 +168,10 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           cursor: grab;
           padding: 10px 4px 28px;
           -webkit-overflow-scrolling: touch;
-          /* ✅ smooth snap on mobile */
           scroll-snap-type: x mandatory;
         }
         .sc-track::-webkit-scrollbar { display: none; }
         .sc-track.grabbing { cursor: grabbing; }
-
-        /* ── CARD ── */
         .sc-card {
           flex: 0 0 230px;
           width: 230px;
@@ -208,7 +187,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           box-shadow: 0 2px 8px rgba(0,0,0,0.07);
           opacity: 0;
           transform: translateY(28px);
-          /* ✅ snap each card into view on mobile */
           scroll-snap-align: start;
           transition:
             opacity 0.6s ease,
@@ -217,10 +195,7 @@ export default function SpecialistsCarousel({ specialists = [] }) {
             border-color 0.35s ease,
             outline-color 0.35s ease;
         }
-        .sc-card.vis {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        .sc-card.vis { opacity: 1; transform: translateY(0); }
         .sc-card:hover {
           transform: translateY(-6px) !important;
           box-shadow: 0 12px 36px rgba(15,118,110,0.14), 0 2px 8px rgba(0,0,0,0.06) !important;
@@ -228,7 +203,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           outline-color: rgba(15,118,110,0.15) !important;
           outline-width: 6px !important;
         }
-
         .sc-card:nth-child(1) { transition-delay: 0.05s; }
         .sc-card:nth-child(2) { transition-delay: 0.12s; }
         .sc-card:nth-child(3) { transition-delay: 0.19s; }
@@ -237,7 +211,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
         .sc-card:nth-child(6) { transition-delay: 0.40s; }
         .sc-card:nth-child(7) { transition-delay: 0.47s; }
         .sc-card:nth-child(8) { transition-delay: 0.54s; }
-
         .sc-img-wrap {
           width: 100%;
           aspect-ratio: 4/3;
@@ -255,7 +228,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: transform 0.55s cubic-bezier(0.22,0.61,0.36,1);
         }
         .sc-card:hover .sc-img { transform: scale(1.05); }
-
         .sc-img-wrap::after {
           content: '';
           position: absolute; inset: 0;
@@ -264,18 +236,13 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: opacity 0.35s ease;
         }
         .sc-card:hover .sc-img-wrap::after { opacity: 1; }
-
         .sc-placeholder {
           width: 100%; height: 100%;
           display: flex; align-items: center; justify-content: center;
           background: #f3f4f6;
           font-size: 52px;
         }
-
-        .sc-body {
-          padding: 14px 14px 16px;
-        }
-
+        .sc-body { padding: 14px 14px 16px; }
         .sc-body::before {
           content: '';
           display: block;
@@ -287,11 +254,10 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           border-radius: 1px;
         }
         .sc-card:hover .sc-body::before { width: 40px; }
-
         .sc-name-first {
           font-size: 11px;
-          font-weight: 500;
-          color: #9CA3AF;
+          font-weight: 700;
+          color: #134e4a;
           margin: 0;
           letter-spacing: 0.2px;
           line-height: 1.4;
@@ -301,12 +267,34 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           font-weight: 700;
           color: #134e4a;
           margin: 2px 0 10px;
-          line-height: 1.15;
+          line-height: 1.3;
           font-family: 'Playfair Display', serif;
           transition: color 0.3s ease;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 6px;
         }
         .sc-card:hover .sc-name-last { color: #0F766E; }
-
+        .sc-qual {
+          display: inline-block;
+          font-size: 9px;
+          font-weight: 700;
+          color: #0F766E;
+          background: rgba(15,118,110,0.08);
+          border: 1px solid rgba(15,118,110,0.18);
+          border-radius: 3px;
+          padding: 2px 6px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          white-space: nowrap;
+          font-family: 'Inter', sans-serif;
+          transition: background 0.3s ease, color 0.3s ease;
+          /* keeps tag baseline-aligned inside the flex name row */
+          align-self: center;
+          line-height: 1.4;
+        }
+        .sc-card:hover .sc-qual { background: #0F766E; color: #fff; }
         .sc-sep {
           width: 100%;
           height: 1px;
@@ -315,7 +303,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: background 0.35s ease;
         }
         .sc-card:hover .sc-sep { background: #0F766E; }
-
         .sc-spec {
           display: flex;
           align-items: center;
@@ -328,7 +315,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: color 0.3s ease;
         }
         .sc-card:hover .sc-spec { color: #0F766E; }
-
         .sc-spec-dot {
           width: 5px; height: 5px;
           border-radius: 50%;
@@ -337,7 +323,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: transform 0.3s ease;
         }
         .sc-card:hover .sc-spec-dot { transform: scale(1.5); }
-
         .sc-desc {
           font-size: 11px;
           color: #9CA3AF;
@@ -346,7 +331,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: color 0.3s ease;
         }
         .sc-card:hover .sc-desc { color: #6B7280; }
-
         .sc-arrow {
           position: absolute;
           top: 50%;
@@ -374,14 +358,12 @@ export default function SpecialistsCarousel({ specialists = [] }) {
         .sc-arrow:disabled { opacity: 0.3; cursor: default; }
         .sc-arrow.left  { left: -20px; }
         .sc-arrow.right { right: -20px; }
-
         .sc-empty {
           text-align: center;
           color: #9CA3AF;
           padding: 60px 20px;
           font-size: 15px;
         }
-
         .sc-foot {
           display: flex;
           align-items: center;
@@ -393,7 +375,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           transition: opacity 0.9s ease 0.5s;
         }
         .sc-foot.vis { opacity: 1; }
-
         .sc-foot-label {
           font-size: 10px;
           color: #9CA3AF;
@@ -408,28 +389,18 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           letter-spacing: 0.5px;
         }
 
-        /* ==============================
-           ✅ TABLET  768px – 1024px
-        ============================== */
+        /* ── TABLET 769px–1024px ── */
         @media (max-width: 1024px) and (min-width: 769px) {
-          /* slightly narrower cards, arrows tucked inside */
           .sc-card { flex: 0 0 210px; width: 210px; }
           .sc-arrow.left  { left: -14px; }
           .sc-arrow.right { right: -14px; }
           .sc-track { gap: 14px; }
         }
 
-        /* ==============================
-           ✅ LARGE MOBILE  481px – 768px
-        ============================== */
+        /* ── LARGE MOBILE 481px–768px ── */
         @media (max-width: 768px) and (min-width: 481px) {
-          .sc-card {
-            /* 2 cards visible at a time */
-            flex: 0 0 calc(50vw - 28px);
-            width: calc(50vw - 28px);
-          }
+          .sc-card { flex: 0 0 calc(50vw - 28px); width: calc(50vw - 28px); }
           .sc-name-last { font-size: 16px; }
-          /* arrows still visible on large phones/small tablets */
           .sc-arrow { width: 34px; height: 34px; font-size: 16px; }
           .sc-arrow.left  { left: -14px; }
           .sc-arrow.right { right: -14px; }
@@ -437,33 +408,18 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           .sc-fb { font-size: 11px; padding: 5px 13px; }
         }
 
-        /* ==============================
-           ✅ SMALL MOBILE  ≤ 480px
-        ============================== */
+        /* ── SMALL MOBILE ≤480px ── */
         @media (max-width: 480px) {
           .sc-section { padding: 36px 0 48px; }
-
           .sc-inner { padding: 0 16px; }
-
           .sc-badge { font-size: 10px; letter-spacing: 2px; }
-
-          .sc-card {
-            /* almost full-width single card */
-            flex: 0 0 calc(100vw - 48px);
-            width: calc(100vw - 48px);
-          }
+          .sc-card { flex: 0 0 calc(100vw - 48px); width: calc(100vw - 48px); }
           .sc-name-last { font-size: 18px; }
           .sc-name-first { font-size: 12px; }
           .sc-desc { font-size: 12px; }
           .sc-spec { font-size: 11px; }
-
-          /* hide arrows — swipe is enough */
           .sc-arrow { display: none; }
-
-          /* full-width track, no side overflow gaps */
           .sc-track { gap: 12px; padding: 10px 0 24px; }
-
-          /* filters scroll horizontally on small screens */
           .sc-filters {
             flex-wrap: nowrap;
             overflow-x: auto;
@@ -473,7 +429,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
           }
           .sc-filters::-webkit-scrollbar { display: none; }
           .sc-fb { flex-shrink: 0; }
-
           .sc-foot { flex-direction: column; gap: 6px; text-align: center; }
         }
       `}</style>
@@ -540,7 +495,12 @@ export default function SpecialistsCarousel({ specialists = [] }) {
 
                         <div className="sc-body">
                           <p className="sc-name-first">{first}</p>
-                          <p className="sc-name-last">{last || first}</p>
+                          <p className="sc-name-last">
+                            {last || first}
+                            {s.qualification && (
+                              <span className="sc-qual">{s.qualification}</span>
+                            )}
+                          </p>
                           <div className="sc-sep" />
                           {s.specialization && (
                             <div className="sc-spec">
@@ -566,6 +526,14 @@ export default function SpecialistsCarousel({ specialists = [] }) {
               >›</button>
             </div>
           )}
+
+          <div className={`sc-foot${visible ? ' vis' : ''}`}>
+            <span className="sc-foot-label">Specialist team</span>
+            <span className="sc-foot-count">
+              {filtered.length}&nbsp;/&nbsp;{specialists.length} specialists
+            </span>
+          </div>
+
         </div>
       </section>
     </>

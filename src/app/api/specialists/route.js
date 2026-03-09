@@ -15,7 +15,9 @@ async function uploadToCloudinary(buffer) {
   });
 }
 
-/* ── GET ── */
+/* =====================
+   GET – Fetch all specialists
+===================== */
 export async function GET() {
   try {
     await connectDB();
@@ -26,63 +28,88 @@ export async function GET() {
   }
 }
 
-/* ── POST ── */
+/* =====================
+   POST – Upload image + save new specialist
+===================== */
 export async function POST(request) {
   try {
     await connectDB();
+
     const formData      = await request.formData();
     const name          = formData.get('name');
+    const qualification = formData.get('qualification') || '';  // ✅ NEW
     const specialization = formData.get('specialization') || '';
-    const description   = formData.get('description') || '';
+    const description   = formData.get('description')    || '';
     const file          = formData.get('image');
 
-    if (!name || !file)
-      return NextResponse.json({ error: 'Name and image are required' }, { status: 400 });
+    if (!name || !file) {
+      return NextResponse.json(
+        { error: 'Name and image are required' },
+        { status: 400 }
+      );
+    }
 
     const buffer       = Buffer.from(await file.arrayBuffer());
     const uploadResult = await uploadToCloudinary(buffer);
 
     const specialist = await Specialist.create({
       name,
+      qualification,    // ✅ NEW
       specialization,
       description,
       image: uploadResult.secure_url,
     });
 
     return NextResponse.json(specialist, { status: 201 });
+
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-/* ── PUT (edit) ── */
+/* =====================
+   PUT – Edit existing specialist (image optional)
+===================== */
 export async function PUT(request) {
   try {
     await connectDB();
+
     const formData       = await request.formData();
     const id             = formData.get('id');
     const name           = formData.get('name');
+    const qualification  = formData.get('qualification')  || '';
     const specialization = formData.get('specialization') || '';
-    const description    = formData.get('description') || '';
-    const file           = formData.get('image'); // optional
+    const description    = formData.get('description')    || '';
+    const file           = formData.get('image');
 
-    const updateData = { name, specialization, description };
+    // ✅ Use $set so MongoDB always writes every field
+    const $set = { name, qualification, specialization, description };
 
-    // Only re-upload if a new image was provided
     if (file && file.size > 0) {
       const buffer       = Buffer.from(await file.arrayBuffer());
       const uploadResult = await uploadToCloudinary(buffer);
-      updateData.image   = uploadResult.secure_url;
+      $set.image         = uploadResult.secure_url;
     }
 
-    const updated = await Specialist.findByIdAndUpdate(id, updateData, { new: true });
+    const updated = await Specialist.findByIdAndUpdate(
+      id,
+      { $set },
+      { new: true }
+    );
+
     return NextResponse.json(updated);
+
   } catch (error) {
+    console.error(error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-/* ── DELETE ── */
+
+/* =====================
+   DELETE – Remove specialist by id
+===================== */
 export async function DELETE(request) {
   try {
     await connectDB();
