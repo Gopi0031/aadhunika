@@ -566,14 +566,6 @@ export default function SpecialistsCarousel({ specialists = [] }) {
               >›</button>
             </div>
           )}
-
-          <div className={`sc-foot${visible ? ' vis' : ''}`}>
-            <span className="sc-foot-label">Specialist team</span>
-            <span className="sc-foot-count">
-              {filtered.length}&nbsp;/&nbsp;{specialists.length} specialists
-            </span>
-          </div>
-
         </div>
       </section>
     </>
