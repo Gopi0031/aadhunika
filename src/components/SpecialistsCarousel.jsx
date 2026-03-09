@@ -478,7 +478,7 @@ useEffect(() => {
             <div className="sc-rule" />
           </div>
 
-          {filters.length > 2 && (
+          {/* {filters.length > 2 && (
             <div className={`sc-filters${visible ? ' vis' : ''}`}>
               {filters.map(f => (
                 <button
@@ -490,7 +490,7 @@ useEffect(() => {
                 </button>
               ))}
             </div>
-          )}
+          )} */}
 
           {filtered.length === 0 ? (
             <p className="sc-empty">No specialists available at the moment.</p>
