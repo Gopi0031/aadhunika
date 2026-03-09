@@ -217,9 +217,22 @@ export default function Footer() {
           <p style={{ fontSize: 13, color: 'rgba(4,59,59,0.6)', margin: 0, fontWeight: 500 }}>
             © {new Date().getFullYear()} Aadhunika Multispeciality Hospital. All rights reserved.
           </p>
-          <p style={{ fontSize: 13, color: '#6B0000', margin: 0, fontWeight: 700 }}>
-            Powered by Ramakalpa Solutions
-          </p>
+          <a
+  href="https://www.ramakalpasolutions.in"
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{
+    fontSize: 13,
+    color: '#6B0000',
+    margin: 0,
+    fontWeight: 700,
+    textDecoration: 'none',
+    cursor: 'pointer',
+  }}
+>
+  Powered by Ramakalpa Solutions
+</a>
+
         </div>
       </footer>
     </>
